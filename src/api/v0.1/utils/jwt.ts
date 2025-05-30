@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWTTOKEN || 'clave-secreta-temporal';
+const JWT_SECRET: string = process.env.JWTTOKEN as string;
 
 interface Payload {
   uid: string;

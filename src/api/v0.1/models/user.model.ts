@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { Schema } from 'mongoose';
 import { Roles } from '../utils/const/roles.js';
+import { UserInterface } from './interfaces/user.interface.js';
 
 const UserSchema: Schema = new mongoose.Schema({
   name: {
@@ -51,5 +52,4 @@ const UserSchema: Schema = new mongoose.Schema({
   }
 });
 
-const User = mongoose.model('User', UserSchema);
-export default User;
+export default mongoose.model<UserInterface & Document>('User', UserSchema);
