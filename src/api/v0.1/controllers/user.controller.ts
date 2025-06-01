@@ -42,10 +42,9 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 export const updateUser = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
   const updates = req.body;
-  const token = req.headers['x-token'];
 
   try {
-    const updatedUser = await UserService.updateUser(id, token, updates);
+    const updatedUser = await UserService.updateUser(id, updates);
 
     res.status(Status.Correct).json({ message: 'Usuario actualizado con éxito.', user: updatedUser });
   } catch (error) {
@@ -94,12 +93,12 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
 
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
   const page: number = Number(req.body.page) || 0;
-  const limit: number = Number(req.body.limit) || 10;
-  const sort: string = req.body.sort || SortOrder.ASC;
+  const size: number = Number(req.body.size) || 10;
+  const sort: string = (req.body.sort as string).toLowerCase() || SortOrder.ASC;
   const { dni } = req.body;
 
   try {
-    const users = await UserService.getUsers({ page, limit, sort, dni });
+    const users = await UserService.getUsers({ page, size, sort, dni });
     res.status(Status.Correct).json(users);
   } catch (error) {
     res.status(Status.Error).json({ message: 'Error al obtener los usuarios.', error: (error as Error).message });

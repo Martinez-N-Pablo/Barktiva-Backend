@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { PetInterface } from './interfaces/pet.interface.js';
 
 const PetSchema = new mongoose.Schema({
-  userId: {
+  owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true

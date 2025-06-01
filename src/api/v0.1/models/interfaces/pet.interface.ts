@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
 
 export interface PetInterface {
-    userId: Types.ObjectId;
+    owner: Types.ObjectId;
     name: string;
     breed: string;
     photo?: string;
