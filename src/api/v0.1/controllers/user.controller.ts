@@ -106,3 +106,20 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+export const addPetToUser = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { petId } = req.body;
+
+  if (!petId || !id) {
+    res.status(Status.BadRequest).json({ message: 'Falta el ID de la mascota.' });
+    return;
+  }
+
+  try {
+    const updatedUser = await UserService.addPetToUser(id, petId);
+    res.status(Status.Correct).json({ message: 'Mascota añadida al usuario con éxito.', user: updatedUser });
+  } catch (error) {
+    res.status(Status.Error).json({ message: 'Error al añadir la mascota al usuario.', error: (error as Error).message });
+  }
+};
+

@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 export interface UserInterface {
   name: string;
   surname?: string;
@@ -5,7 +7,7 @@ export interface UserInterface {
   password: string;
   photo?: string;
   birthdate?: Date;
-  dogsID?: string[];
-  tasksID?: string[];
+  pets?: Types.ObjectId[];
+  tasks?: Types.ObjectId[];
   role?: 'admin' | 'user';
 }

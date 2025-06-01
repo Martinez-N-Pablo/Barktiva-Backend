@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { PetInterface } from './interfaces/pet.interface.js';
 
 const PetSchema = new mongoose.Schema({
   userId: {
@@ -45,5 +46,4 @@ const PetSchema = new mongoose.Schema({
   ]
 });
 
-const Pet = mongoose.model('Pet', PetSchema);
-export default Pet;
+export default mongoose.model<PetInterface & Document>('Pet', PetSchema);
