@@ -140,4 +140,28 @@ export const removePetFromUser = async (userId: string, petId: Types.ObjectId) =
     return user;
 }
 
+export const addTaskToUser = async (userId: string, taskId: Types.ObjectId) => {
+    const user = await findUserById(userId);
+    
+    if (!user.tasks) {
+        user.tasks = [];
+    }
 
+    user.tasks.push(taskId);
+    await user.save();
+    
+    return user;
+}
+
+export const removeTaskFromUser = async (userId: string, taskId: Types.ObjectId) => {
+    const user = await findUserById(userId);
+    
+    if (!user.tasks) {
+        throw new Error('El usuario no tiene tareas.');
+    }
+
+    user.tasks = user.tasks.filter((task: Types.ObjectId) => task.toString() !== taskId.toString());
+    await user.save();
+    
+    return user;
+};

@@ -39,7 +39,7 @@ export const createPet = async (req: Request, res: Response): Promise<void> => {
 
 export const updatePet = async (req: Request, res: Response): Promise<void> => {
   const { uid, petId } = req.params;
-  const { owner } = req.body;
+  const { owner, ...petBodyUpdate } = req.body;
 
   if (!owner) {
     res.status(Status.BadRequest).json({ message: 'Falta el UID del usuario.' });
@@ -52,7 +52,7 @@ export const updatePet = async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const updatedPet = await PetService.updatePetService(petId, req.body);
+    const updatedPet = await PetService.updatePetService(petId, petBodyUpdate);
 
     if (!updatedPet) {
       res.status(Status.NotFound).json({ message: 'Mascota no encontrada' });
@@ -78,7 +78,8 @@ export const getPets = async (req: Request, res: Response): Promise<void> => {
   const { owner } = req.body;
 
   try {
-    const pets = await PetService.getAllPets({page, limit, sort, owner});
+    const pets = await PetService.getAllPetsService({page, limit, sort, owner});
+
     res.status(Status.Correct).json(pets);
   } catch (error) {
     res.status(Status.Error).json({
@@ -93,10 +94,12 @@ export const getPetById = async (req: Request, res: Response): Promise<void> => 
 
   try {
     const pet = await PetService.getPetById(id);
+
     if (!pet) {
       res.status(Status.NotFound).json({ message: 'Mascota no encontrada' });
       return;
     }
+    
     res.status(Status.Correct).json(pet);
   } catch (error) {
     res.status(Status.Error).json({

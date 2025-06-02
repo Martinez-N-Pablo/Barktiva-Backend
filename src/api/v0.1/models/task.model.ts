@@ -1,17 +1,19 @@
 import mongoose from 'mongoose';
 
 const TaskSchema = new mongoose.Schema({
-  userId: {
+  user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
 
-  petId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Pet',
-    required: true
-  },
+  pets: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Pet',
+      required: true
+    }
+  ],
 
   taskType: {
     type: String,
@@ -28,7 +30,9 @@ const TaskSchema = new mongoose.Schema({
   },
 
   dosesTime: {
-    type: Number
+    type: String,
+    enum: ['day', 'week', 'month'],
+    default: 'day'
   },
 
   dosesPerDay: {
@@ -56,7 +60,8 @@ const TaskSchema = new mongoose.Schema({
   },
 
   initialDate: {
-    type: Date
+    type: Date,
+    required: true
   },
 
   finalDate: {

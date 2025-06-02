@@ -7,6 +7,7 @@ import router from './api/v0.1/routes/index.js';
 import routerUser from './api/v0.1/routes/user.js';
 import routerPet from './api/v0.1/routes/pet.js';
 import routerAuth from './api/v0.1/routes/auth.js';
+import routerTask from './api/v0.1/routes/task.js';
 
 //Frameworks
 const app = express();
@@ -24,6 +25,7 @@ app.use(express.json());
 app.use('/api/user', routerUser);
 app.use('/api/pet', routerPet);
 app.use('/api/auth', routerAuth);
+app.use('/api/task', routerTask);
 
 app.listen(process.env.PORT, () => {
     console.log(`Backend running on PORT: ${process.env.PORT}`);
