@@ -16,7 +16,8 @@ const TaskSchema = new mongoose.Schema({
   ],
 
   taskType: {
-    type: String,
+    type: mongoose.Schema.Types.Mixed,
+    ref: 'TaskTypes',
     required: true
   },
 
@@ -35,15 +36,15 @@ const TaskSchema = new mongoose.Schema({
     default: 'day'
   },
 
-  dosesPerDay: {
+  dosePerDay: {
     type: Number
   },
 
-  dosesPerWeek: {
+  dosePerWeek: {
     type: Number
   },
 
-  dosesPerMonth: {
+  dosePerMonth: {
     type: Number
   },
 

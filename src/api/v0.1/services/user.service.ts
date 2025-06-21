@@ -4,10 +4,10 @@ import hashPassword from '../utils/hassPassword.js';
 import validatePassword from '../utils/validatePassword.js';
 import { verifyCurrentPassword } from '../utils/verifyCurrentPassword.js';
 import { PetInterface } from '../models/interfaces/pet.interface.js';
-import { Types } from 'mongoose';
+import { ClientSession, Types } from 'mongoose';
 
 interface RegisterInput extends UserInterface {
-    repeatPassword: string;
+    confirmPassword: string;
 }
 
 interface GetUsersOptions {
@@ -18,9 +18,9 @@ interface GetUsersOptions {
 }
 
 export const registerUser = async (input: RegisterInput) => {
-    const { password, repeatPassword, ...rest } = input;
+    const { password, confirmPassword, ...rest } = input;
 
-    if (!validatePassword(password, repeatPassword)) {
+    if (!validatePassword(password, confirmPassword)) {
         throw new Error('Las contraseñas no coinciden.');
     }
 
@@ -61,21 +61,30 @@ export const changeUserPassword = async (
     userId: string,
     currentPassword: string,
     newPassword: string,
-    repeatPassword: string
+    confirmPassword: string
 ) => {
     const user = await findUserById(userId);
 
     await verifyCurrentPassword(user, currentPassword);
 
-    validatePassword(newPassword, repeatPassword);
+    validatePassword(newPassword, confirmPassword);
 
     user.password = hashPassword(newPassword);
     await user.save();
 };
 
-const findUserById = async (id: string) => {
-    const user = await User.findById(id);
+const findUserById = async (id: string, session?: ClientSession) => {
+    const query = User.findById(id);
+    
+    // Si hay sesion, la aplicamos
+    if (session) {
+        query.session(session);
+    }
+
+    const user = await query;
+
     if (!user) throw new Error('Usuario no encontrado.');
+
     return user;
 };
 
@@ -101,7 +110,7 @@ export const getUsers = async ({ page, size, sort, dni }: GetUsersOptions) => {
       .select('-password')
       .sort({ name: sort === 'asc' ? 1 : -1 })
       .skip(skip)
-      .size(size),
+      .limit(size),
     User.countDocuments(query)
   ]);
 
@@ -114,15 +123,22 @@ export const getUsers = async ({ page, size, sort, dni }: GetUsersOptions) => {
   };
 };
 
-export const addPetToUser = async (userId: string, petId: Types.ObjectId) => {
+export const addPetToUser = async (userId: string, petId: Types.ObjectId, session?: ClientSession) => {
     const user = await findUserById(userId);
-    
+
+    if (!user) {
+        throw new Error('Usuario no encontrado.');
+    }
+
     if (!user.pets) {
         user.pets = [];
     }
 
-    user.pets.push(petId);
-    await user.save();
+    if (!user.pets.includes(petId)) {
+        user.pets.push(petId);
+    }
+
+    await user.save({session});
     
     return user;
 }
@@ -153,15 +169,15 @@ export const addTaskToUser = async (userId: string, taskId: Types.ObjectId) => {
     return user;
 }
 
-export const removeTaskFromUser = async (userId: string, taskId: Types.ObjectId) => {
-    const user = await findUserById(userId);
+export const removeTaskFromUser = async (userId: string, taskId: Types.ObjectId, session: ClientSession) => {
+    const user = await findUserById(userId, session);
     
     if (!user.tasks) {
         throw new Error('El usuario no tiene tareas.');
     }
 
     user.tasks = user.tasks.filter((task: Types.ObjectId) => task.toString() !== taskId.toString());
-    await user.save();
+    await user.save({session});
     
     return user;
 };

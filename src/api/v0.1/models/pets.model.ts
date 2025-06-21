@@ -14,7 +14,7 @@ const PetSchema = new mongoose.Schema({
   },
 
   breed: {
-    type: String,
+    type: mongoose.Schema.Types.Mixed,
     required: true
   },
 
@@ -35,7 +35,9 @@ const PetSchema = new mongoose.Schema({
   },
 
   castrated: {
-    type: Boolean
+    type: String,
+    enum: ['c', 's', ''],
+    default: 'c'
   },
 
   tasks: [

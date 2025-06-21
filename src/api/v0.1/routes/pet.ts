@@ -4,12 +4,12 @@ import { createPet, getPets, getPetById, updatePet, deletePet } from '../control
 
 const router = Router();
 
-router.post('/:uid', validarJWT, createPet);
-router.post('/', validarJWT, getPets);
+router.post('/', validarJWT, createPet);
+router.post('/pets', validarJWT, getPets);
 
 router.get('/:id', validarJWT, getPetById);
 
-router.put('/:uid/:petId', validarJWT, updatePet);
-router.delete('/:uid/:petId', validarJWT, deletePet);
+router.put('/:petId', validarJWT, updatePet);
+router.delete('/:petId', validarJWT, deletePet);
 
 export default router;

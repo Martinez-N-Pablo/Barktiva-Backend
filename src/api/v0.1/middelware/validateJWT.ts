@@ -8,14 +8,16 @@ export const validarJWT = (
   res: Response,
   next: NextFunction
 ): void => {
-    const token = req.header('x-token');
+    const authHeader = req.header('authorization');
 
-    if (!token) {
+    if (!authHeader ) {
         res.status(400).json({
-            message: 'Falta token de autorización'
+            message: 'Falta información en el header'
         });
         return;
     }
+
+    const token: string = authHeader.split(' ')[1];
 
     try {
         const { uid } = jwt.verify(token, process.env.JWTTOKEN as string) as JwtPayload;

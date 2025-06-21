@@ -38,15 +38,13 @@ export const validarTokenService = async (token: string) => {
     photo
   } = usuarioBD;
 
-  const newToken = await generarJWT({ uid, role });
-
   return {
     message: 'Token válido',
     name,
     surname,
     role,
     email,
-    token: newToken,
+    token,
     photo
   };
 };

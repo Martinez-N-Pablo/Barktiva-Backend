@@ -4,11 +4,29 @@ import { Status } from '../utils/const/status.js';
 
 export const renovarToken = async (req: Request, res: Response): Promise<void> => {
   try {
-    const token = req.header('x-token');
+    const authHeader = req.header('authorization');
 
-    if (!token) {
+    if (!authHeader ) {
       res.status(Status.BadRequest).json({
         message: 'Falta token de autorización',
+        token: '',
+      });
+      return;
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    if(!token) {
+      res.status(Status.BadRequest).json({
+        message: 'Error en el formato del token',
+        token: '',
+      });
+      return;
+    }
+
+    if(!token) {
+      res.status(Status.BadRequest).json({
+        message: 'Error en el formato del token',
         token: '',
       });
       return;
@@ -31,12 +49,22 @@ export const renovarToken = async (req: Request, res: Response): Promise<void> =
 };
 
 export const validarToken = async (req: Request, res: Response): Promise<void> => {
-  const token = req.header('x-token');
+  const authHeader = req.header('authorization');
 
-  if (!token) {
+  if (!authHeader ) {
     res.status(Status.BadRequest).json({
       message: 'Falta token de autorización',
       token: ''
+    });
+    return;
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  if(!token) {
+    res.status(Status.BadRequest).json({
+      message: 'Error en el formato del token',
+      token: '',
     });
     return;
   }

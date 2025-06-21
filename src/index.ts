@@ -14,7 +14,11 @@ const app = express();
 
 connectDB();
 
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:4200',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 app.use(express.json());
 
 /**
@@ -29,4 +33,4 @@ app.use('/api/task', routerTask);
 
 app.listen(process.env.PORT, () => {
     console.log(`Backend running on PORT: ${process.env.PORT}`);
-})
+});

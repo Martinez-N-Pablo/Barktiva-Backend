@@ -16,7 +16,7 @@ router.get('/:id', validarJWT, getUserById);
 // Create new user
 router.post('/', createUser);
 // Get all users
-router.post('/', getUsers);
+router.post('/users', getUsers);
 // Add pet to user
 router.post('/:id', validarJWT, addPetToUser);
 

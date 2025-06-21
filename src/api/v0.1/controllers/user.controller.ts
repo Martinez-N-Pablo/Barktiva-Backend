@@ -9,7 +9,7 @@ import * as UserService from '../services/user.service.js';
 import { SortOrder } from '../utils/const/sortOrder.js';
 
 export const createUser = async (req: Request, res: Response): Promise<void> => {
- const { name, surname, email, password, repeatPassword, photo, birthdate } = req.body;
+ const { name, surname, email, password, confirmPassword, photo, birthdate } = req.body;
 
   if (!name || !email || !password) {
     res.status(Status.BadRequest).json({ message: 'Faltan campos obligatorios.' });
@@ -22,7 +22,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       surname,
       email,
       password,
-      repeatPassword,
+      confirmPassword,
       photo,
       birthdate
     });
@@ -54,15 +54,15 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
 
 export const changePassword = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
-  const { currentPassword, newPassword, repeatPassword } = req.body;
+  const { currentPassword, newPassword, confirmPassword } = req.body;
 
-  if (!currentPassword || !newPassword || !repeatPassword) {
+  if (!currentPassword || !newPassword || !confirmPassword) {
     res.status(Status.BadRequest).json({ message: 'Faltan campos obligatorios.' });
     return;
   }
 
   try {
-    await UserService.changeUserPassword(id, currentPassword, newPassword, repeatPassword);
+    await UserService.changeUserPassword(id, currentPassword, newPassword, confirmPassword);
     res.status(Status.Correct).json({ message: 'Contraseña actualizada con éxito.' });
   } catch (error) {
     res.status(Status.Error).json({ message: 'Error al cambiar la contraseña.', error: (error as Error).message });

@@ -1,18 +1,17 @@
-import { Types } from "mongoose";
+import { ClientSession, Types } from "mongoose";
 import { PetInterface } from "../models/interfaces/pet.interface.js";
 import Pet from '../models/pets.model.js';
 
 interface GetPetsInterface {
     page: number;
-    limit: number;
+    size: number;
     sort: string;
     owner?: Types.ObjectId | string;
 };
 
-export const createPetService = async (petData: PetInterface) => {
+export const createPetService = async (petData: PetInterface, session: ClientSession) => {
     const newPet: PetInterface = petData;
-
-    return await Pet.create(newPet);
+    return await Pet.create([newPet], {session});
 };
 
 export const updatePetService = async (petId: string, updates: any): Promise<PetInterface> => {
@@ -35,8 +34,8 @@ export const updatePetService = async (petId: string, updates: any): Promise<Pet
     return pet;
 };
 
-export const getAllPetsService = async ({ page, limit, sort, owner }: GetPetsInterface) => {
-  const skip = (page - 1) * limit;
+export const getAllPetsService = async ({ page, size, sort, owner }: GetPetsInterface) => {
+  const skip = (page - 1) * size;
 
   const query: Record<string, any> = {};
   if (owner) query.owner = owner;
@@ -45,7 +44,7 @@ export const getAllPetsService = async ({ page, limit, sort, owner }: GetPetsInt
     Pet.find(query)
       .sort({ name: sort === 'asc' ? 1 : -1 })
       .skip(skip)
-      .limit(limit)
+      .limit(size)
       .populate('owner', 'name surname email'),
     Pet.countDocuments(query)
   ]);
@@ -53,14 +52,14 @@ export const getAllPetsService = async ({ page, limit, sort, owner }: GetPetsInt
   return {
     total,
     page,
-    limit,
-    totalPages: Math.ceil(total / limit),
+    size,
+    totalPages: Math.ceil(total / size),
     pets
   };
 };
 
-export const getPetById = async (petId: string) => {
-    return await Pet.findById(petId).populate('owner', 'name surname email');
+export const getPetById = async (petId: string, session?: ClientSession) => {
+    return await Pet.findById(petId).populate('owner', 'name surname email').session(session || null);
 };
 
 export const deletePetService = async (petId: string, owner: string) => {
@@ -78,25 +77,27 @@ export const deletePetService = async (petId: string, owner: string) => {
   return pet;
 };
 
-export const addTaskToPet = async (petId: string, taskId: Types.ObjectId) => {
+export const addTaskToPet = async (petId: string, taskId: Types.ObjectId, session?: ClientSession) => {
     const pet = await getPetById(petId);
 
     if (!pet) {
-        throw new Error('Mascota no encontrada.');
+      throw new Error('Mascota no encontrada.');
     }
     
     if (!pet.tasks) {
-        pet.tasks = [];
+      pet.tasks = [];
     }
 
-    pet.tasks.push(taskId);
-    await pet.save();
-    
+    if(!pet.tasks.includes(taskId)) {
+      pet.tasks.push(taskId);
+    }
+
+    await pet.save({session});
     return pet;
 };
 
-export const removeTaskFromPet = async (petId: string, taskId: string) => {
-    const pet = await getPetById(petId);
+export const removeTaskFromPet = async (petId: string, taskId: string, session: ClientSession) => {
+    const pet = await getPetById(petId, session);
 
     if (!pet) {
         throw new Error('Mascota no encontrada.');
@@ -107,7 +108,7 @@ export const removeTaskFromPet = async (petId: string, taskId: string) => {
     }
 
     pet.tasks = pet.tasks.filter((task: Types.ObjectId) => task.toString() !== taskId.toString());
-    await pet.save();
+    await pet.save({session});
     
     return pet;
 };
