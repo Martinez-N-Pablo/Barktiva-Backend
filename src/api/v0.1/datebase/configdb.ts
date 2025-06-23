@@ -8,6 +8,8 @@ if (!connectionString) {
   throw new Error('La variable de entorno DBCON no está definida');
 }
 
+console.log(connectionString);
+
 export async function connectDB(): Promise<void> {
   try {
     await mongoose.connect(connectionString || "");
