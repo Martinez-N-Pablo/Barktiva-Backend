@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { changePassword, createUser, updateUser, deleteUser, getUserById, getUsers, addPetToUser } from '../controllers/user.controller.js';
 import { validarJWT } from '../middelware/validateJWT.js';
+import { upload } from '../middelware/upload.js';
 
 const router = Router();
 
@@ -24,7 +25,7 @@ router.post('/:id', validarJWT, addPetToUser);
  * Put
  */
 // Update user
-router.put('/:id', validarJWT, updateUser);
+router.put('/:id', [validarJWT,  upload.single('image')], updateUser);
 // Change user password
 router.put('/:id/password', validarJWT, changePassword);
 

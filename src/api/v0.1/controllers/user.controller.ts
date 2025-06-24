@@ -7,8 +7,11 @@ import validatePassword from '../utils/validatePassword.js';
 import { Status } from '../utils/const/status.js';
 import * as UserService from '../services/user.service.js';
 import { SortOrder } from '../utils/const/sortOrder.js';
+import { bucket } from '../../../config/config-firebase.js';
+import { deleteImageFromStorage, uploadImageToStorage } from '../services/firebase.service.js';
+import { AuthenticatedRequest } from '../models/interfaces/authenticatedRequest.js';
 
-export const createUser = async (req: Request, res: Response): Promise<void> => {
+export const createUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
  const { name, surname, email, password, confirmPassword, photo, birthdate } = req.body;
 
   if (!name || !email || !password) {
@@ -39,12 +42,25 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-export const updateUser = async (req: Request, res: Response): Promise<void> => {
-  const { id } = req.params;
+export const updateUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const uid: string = req.uid || "";
   const updates = req.body;
 
   try {
-    const updatedUser = await UserService.updateUser(id, updates);
+    const user = await UserService.getUserById(uid);
+
+    // Si llega una nueva imagen la subimos
+    if (req.file) {
+      if (user.photo) { // si ya tenia una foto almacenada, la mandamos eliminar del firebase storage
+        await deleteImageFromStorage(user.photo);
+      }
+
+      const newFileName = `users/${uid}_${Date.now()}.jpg`;
+      const imageUrl = await uploadImageToStorage(req.file, newFileName);
+      updates.photo = imageUrl;
+    }
+
+    const updatedUser = await UserService.updateUser(uid, updates);
 
     res.status(Status.Correct).json({ message: 'Usuario actualizado con éxito.', user: updatedUser });
   } catch (error) {
@@ -52,7 +68,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-export const changePassword = async (req: Request, res: Response): Promise<void> => {
+export const changePassword = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { id } = req.params;
   const { currentPassword, newPassword, confirmPassword } = req.body;
 
@@ -69,7 +85,7 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
   }
 };
 
-export const getUserById = async (req: Request, res: Response): Promise<void> => {
+export const getUserById = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { id } = req.params;
 
   try {
@@ -80,7 +96,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const deleteUser = async (req: Request, res: Response): Promise<void> => {
+export const deleteUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { id } = req.params;
 
   try {
@@ -91,7 +107,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-export const getUsers = async (req: Request, res: Response): Promise<void> => {
+export const getUsers = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const page: number = Number(req.body.page) || 0;
   const size: number = Number(req.body.size) || 10;
   const sort: string = (req.body.sort as string).toLowerCase() || SortOrder.ASC;
@@ -105,7 +121,7 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const addPetToUser = async (req: Request, res: Response): Promise<void> => {
+export const addPetToUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { id } = req.params;
   const { petId } = req.body;
 
