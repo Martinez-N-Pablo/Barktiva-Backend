@@ -1,6 +1,7 @@
 import { ClientSession, Types } from "mongoose";
 import { PetInterface } from "../models/interfaces/pet.interface.js";
 import Pet from '../models/pets.model.js';
+import { deleteImageFromStorage, uploadImageToStorage } from "./firebase.service.js";
 
 interface GetPetsInterface {
     page: number;
@@ -21,6 +22,17 @@ export const updatePetService = async (petId: string, updates: any): Promise<Pet
 
     if (!pet) {
         throw new Error('Mascota no encontrada.');
+    }
+
+    if (updates.photoFile) {
+      if (pet.photo) { // si ya tenia una foto almacenada, la mandamos eliminar del firebase storage
+        await deleteImageFromStorage(pet.photo);
+      }
+
+      const newFileName = `pets/${pet._id}_${Date.now()}.jpg`;
+      const imageUrl = await uploadImageToStorage(updates.photoFile, newFileName);
+      
+      pet.photo = imageUrl;
     }
     
     // Filtrar solo los campos que se permiten actualizar

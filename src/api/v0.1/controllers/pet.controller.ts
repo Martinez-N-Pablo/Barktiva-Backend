@@ -5,9 +5,11 @@ import * as UserService from '../services/user.service.js';
 import { SortOrder } from '../utils/const/sortOrder.js';
 import { AuthenticatedRequest } from '../models/interfaces/authenticatedRequest.js';
 import mongoose from 'mongoose';
+import { deleteImageFromStorage, uploadImageToStorage } from '../services/firebase.service.js';
 
 export const createPet = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const owner: string = req.uid || "";
+  const photo = req.body.photo;
 
   if (!owner) {
     res.status(Status.BadRequest).json({ message: 'Falta el identificador del usuario.' });
@@ -26,10 +28,20 @@ export const createPet = async (req: AuthenticatedRequest, res: Response): Promi
       session.endSession();
     }
 
-    if(pet) {
-      await UserService.addPetToUser(owner, pet._id, session);
-    }
+    if (req.file) {
+      if (photo) { // si ya tenia una foto almacenada, la mandamos eliminar del firebase storage
+        await deleteImageFromStorage(photo);
+      }
 
+      const newFileName = `pets/${pet._id}_${Date.now()}.jpg`;
+      const imageUrl = await uploadImageToStorage(req.file, newFileName);
+      
+      pet.photo = imageUrl;
+      await pet.save({ session });
+    }
+    
+    await UserService.addPetToUser(owner, pet._id, session);
+    
     await session.commitTransaction();
     res.status(Status.Correct).json({
       message: 'Mascota registrada correctamente',
@@ -58,6 +70,10 @@ export const updatePet = async (req: AuthenticatedRequest, res: Response): Promi
   }
 
   try {
+    if (req.file) {
+      petBodyUpdate.photoFile = req.file;
+    }
+    
     const updatedPet = await PetService.updatePetService(petId, petBodyUpdate);
 
     if (!updatedPet) {
