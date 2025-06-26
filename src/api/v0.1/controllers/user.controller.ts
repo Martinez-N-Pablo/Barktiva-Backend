@@ -44,7 +44,6 @@ export const createUser = async (req: AuthenticatedRequest, res: Response): Prom
 };
 
 export const updateUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  console.log("Hola");
   const uid: string = req.uid || "";
   const updates = req.body;
 

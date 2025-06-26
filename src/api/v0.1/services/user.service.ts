@@ -89,7 +89,10 @@ const findUserById = async (id: string, session?: ClientSession) => {
 };
 
 export const getUserById = async (id: string) => {
-    const user = await User.findById(id).select('-password'); // Menos password
+    const user = await User.findById(id)
+        .select('-password')
+        .populate("pets", "_id name")
+        .populate("tasks", "_id name"); // Menos password
     if (!user) throw new Error('Usuario no encontrado.');
     return user;
 };
