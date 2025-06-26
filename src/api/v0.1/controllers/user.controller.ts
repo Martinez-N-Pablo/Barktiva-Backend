@@ -18,7 +18,7 @@ export const createUser = async (req: AuthenticatedRequest, res: Response): Prom
     res.status(Status.BadRequest).json({ message: 'Faltan campos obligatorios.' });
     return;
   }
-
+  
   try {
     const user = await UserService.registerUser({
       name,
@@ -27,7 +27,8 @@ export const createUser = async (req: AuthenticatedRequest, res: Response): Prom
       password,
       confirmPassword,
       photo,
-      birthdate
+      birthdate,
+      role: 'user'
     });
 
     if(!user) {
@@ -43,8 +44,14 @@ export const createUser = async (req: AuthenticatedRequest, res: Response): Prom
 };
 
 export const updateUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  console.log("Hola");
   const uid: string = req.uid || "";
   const updates = req.body;
+
+  if (!uid) {
+    res.status(Status.BadRequest).json({ message: 'Falta el identificador del usuario.' });
+    return;
+  }
 
   try {
     const user = await UserService.getUserById(uid);
@@ -69,8 +76,13 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response): Prom
 };
 
 export const changePassword = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { id } = req.params;
+  const uid: string = req.uid || "";
   const { currentPassword, newPassword, confirmPassword } = req.body;
+
+  if (!uid) {
+    res.status(Status.BadRequest).json({ message: 'Falta el identificador del usuario.' });
+    return;
+  }
 
   if (!currentPassword || !newPassword || !confirmPassword) {
     res.status(Status.BadRequest).json({ message: 'Faltan campos obligatorios.' });
@@ -78,7 +90,7 @@ export const changePassword = async (req: AuthenticatedRequest, res: Response): 
   }
 
   try {
-    await UserService.changeUserPassword(id, currentPassword, newPassword, confirmPassword);
+    await UserService.changeUserPassword(uid, currentPassword, newPassword, confirmPassword);
     res.status(Status.Correct).json({ message: 'Contraseña actualizada con éxito.' });
   } catch (error) {
     res.status(Status.Error).json({ message: 'Error al cambiar la contraseña.', error: (error as Error).message });
@@ -86,10 +98,10 @@ export const changePassword = async (req: AuthenticatedRequest, res: Response): 
 };
 
 export const getUserById = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { id } = req.params;
+  const uid: string = req.uid || "";
 
   try {
-    const user = await UserService.getUserById(id);
+    const user = await UserService.getUserById(uid);
     res.status(Status.Correct).json({ user });
   } catch (error) {
     res.status(Status.Error).json({ message: 'Error al obtener el usuario.', error: (error as Error).message });
@@ -97,10 +109,15 @@ export const getUserById = async (req: AuthenticatedRequest, res: Response): Pro
 };
 
 export const deleteUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { id } = req.params;
+  const uid: string = req.uid || "";
+
+  if (!uid) {
+    res.status(Status.BadRequest).json({ message: 'Falta el identificador del usuario.' });
+    return;
+  }
 
   try {
-    await UserService.deleteUser(id);
+    await UserService.deleteUser(uid);
     res.status(Status.Correct).json({ message: 'Usuario eliminado con éxito.' });
   } catch (error) {
     res.status(Status.Error).json({ message: 'Error al eliminar el usuario.', error: (error as Error).message });
@@ -122,16 +139,21 @@ export const getUsers = async (req: AuthenticatedRequest, res: Response): Promis
 };
 
 export const addPetToUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { id } = req.params;
+  const uid = req.uid || "";
   const { petId } = req.body;
 
-  if (!petId || !id) {
+  if (!uid) {
+    res.status(Status.BadRequest).json({ message: 'Falta el identificador del usuario.' });
+    return;
+  }
+
+  if (!petId) {
     res.status(Status.BadRequest).json({ message: 'Falta el ID de la mascota.' });
     return;
   }
 
   try {
-    const updatedUser = await UserService.addPetToUser(id, petId);
+    const updatedUser = await UserService.addPetToUser(uid, petId);
     res.status(Status.Correct).json({ message: 'Mascota añadida al usuario con éxito.', user: updatedUser });
   } catch (error) {
     res.status(Status.Error).json({ message: 'Error al añadir la mascota al usuario.', error: (error as Error).message });

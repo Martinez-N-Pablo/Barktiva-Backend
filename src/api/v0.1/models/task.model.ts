@@ -66,7 +66,8 @@ const TaskSchema = new mongoose.Schema({
   },
 
   finalDate: {
-    type: Date
+    type: Date,
+    required: true
   },
 
   description: {

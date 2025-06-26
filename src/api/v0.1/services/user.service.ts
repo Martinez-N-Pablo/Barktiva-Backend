@@ -74,7 +74,7 @@ export const changeUserPassword = async (
 };
 
 const findUserById = async (id: string, session?: ClientSession) => {
-    const query = User.findById(id);
+    const query = User.findById(id).select('-password');;
     
     // Si hay sesion, la aplicamos
     if (session) {

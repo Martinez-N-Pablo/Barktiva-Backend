@@ -9,7 +9,7 @@ const router = Router();
  * Get
  */
 // Get user by ID
-router.get('/:id', validarJWT, getUserById);
+router.get('/', validarJWT, getUserById);
 
 /**
  * Post
@@ -19,13 +19,13 @@ router.post('/', createUser);
 // Get all users
 router.post('/users', getUsers);
 // Add pet to user
-router.post('/:id', validarJWT, addPetToUser);
+router.post('/:petId', validarJWT, addPetToUser);
 
 /**
  * Put
  */
 // Update user
-router.put('/:id', [validarJWT,  upload.single('image')], updateUser);
+router.put('/', [validarJWT,  upload.single('image')], updateUser);
 // Change user password
 router.put('/:id/password', validarJWT, changePassword);
 
@@ -33,7 +33,7 @@ router.put('/:id/password', validarJWT, changePassword);
  * Delete
  */
 // Delete user
-router.delete('/:id', validarJWT, deleteUser);
+router.delete('/', validarJWT, deleteUser);
 
 
 export default router;

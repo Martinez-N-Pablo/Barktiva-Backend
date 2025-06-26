@@ -69,10 +69,9 @@ export const getTasksService = async ({ page, size, sort, user, pets }: GetTaskI
     const skip = (page - 1) * size;
     const query: Record<string, any> = {};
 
-    if (user) query.owner = user;
+    if (user) query.user = user;
     if (pets && pets.length > 0) query.pets = { $in: pets };
 
-    console.log(query);
     const [tasks, total] = await Promise.all([
         Task.find(query)
         .sort({ name: sort === 'asc' ? 1 : -1 })

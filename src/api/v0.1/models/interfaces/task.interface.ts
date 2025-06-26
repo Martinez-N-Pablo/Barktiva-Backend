@@ -15,6 +15,6 @@ export interface TaskInterface {
   quantity?: number;
   routeAdministration?: string;
   initialDate: Date;
-  finalDate?: Date;
+  finalDate: Date;
   description?: string;
 }
