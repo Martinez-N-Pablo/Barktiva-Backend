@@ -6,6 +6,7 @@ import { SortOrder } from '../utils/const/sortOrder.js';
 import { AuthenticatedRequest } from '../models/interfaces/authenticatedRequest.js';
 import mongoose from 'mongoose';
 import { deleteImageFromStorage, uploadImageToStorage } from '../services/firebase.service.js';
+import * as TaskService from '../services/task.service.js';
 
 export const createPet = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const owner: string = req.uid || "";
@@ -135,14 +136,32 @@ export const deletePet = async (req: AuthenticatedRequest, res: Response): Promi
   const { petId } = req.params;
   const uid: string = req.uid || "";
 
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const pet = await PetService.deletePetService(petId, uid);
 
-    if(pet) {
-      await UserService.removePetFromUser(pet.owner.toString(), pet._id);
+    if(!pet) {
+      await session.abortTransaction();
+      res.status(Status.NotFound).json({ message: 'Tarea no encontrada' });
+      return;
     }
+
+    await UserService.removePetFromUser(pet.owner.toString(), pet._id);
+
+    if(pet.tasks) {
+      for(const task of pet.tasks) {
+        await TaskService.removePetFromTask(task._id.toString(), pet._id);
+      }
+    }
+    
+    await session.commitTransaction();
     res.status(Status.Correct).json({ message: 'Mascota eliminada con éxito.' });
   } catch (error) {
+    await session.abortTransaction();
     res.status(Status.Error).json({ message: 'Error al eliminar la mascota.', error: (error as Error).message });
+  } finally {
+    session.endSession();
   }
 };

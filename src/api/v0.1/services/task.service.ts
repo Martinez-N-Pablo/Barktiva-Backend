@@ -113,3 +113,26 @@ export const getTaskTypesService = async ({ page, size, sort }: GetTaskTypesInte
 export const getTaskTypeByIdService = async(id: string) => {
     return await TaskTypes.findById(id);
 };
+
+export const removePetFromTask = async (taskId: string, petId: Types.ObjectId) => {
+    const task = await getTaskByIdService(taskId);
+    
+    if (!task.pets) {
+        throw new Error('La tarea no tiene mascotas asociadas.');
+    }
+
+    task.pets = task.pets.filter((pet: Types.ObjectId) => pet.toString() !== petId.toString());
+
+    console.log("Task tras delete");
+    console.log(task.pets);
+
+    // Si después de filtrar no queda ninguna mascota, eliminamos la tarea
+    if (Array.isArray(task.pets) && task.pets.length === 0) {
+        await task.deleteOne();
+        return null;
+    }
+
+    await task.save();
+    
+    return task;
+}

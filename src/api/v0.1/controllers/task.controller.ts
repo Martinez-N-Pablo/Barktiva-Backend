@@ -82,6 +82,7 @@ export const getTaskById = async (req: AuthenticatedRequest, res: Response): Pro
     });
   }
 };
+
 export const deleteTask = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { taskId } = req.params;
   const uid = req.uid || "";
