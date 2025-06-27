@@ -1,10 +1,6 @@
 import mongoose from 'mongoose';
 import { PetInterface } from './interfaces/pet.interface.js';
-
-const SterilizedValue = {
-  sterilized: 's',
-  intact: 'i'
-} as const;
+import { SterilizedValue } from './interfaces/sterelized.js';
 
 const PetSchema = new mongoose.Schema({
   owner: {
@@ -39,7 +35,7 @@ const PetSchema = new mongoose.Schema({
     type: Number
   },
 
-  castrated: {
+  sterelized: {
     type: String,
     enum: [...Object.values(SterilizedValue), ''],
     default: ''

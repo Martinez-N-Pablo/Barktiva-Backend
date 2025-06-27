@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { SterilizedType } from "./sterelized.js";
 
 export interface PetInterface {
     _id: Types.ObjectId;
@@ -9,6 +10,6 @@ export interface PetInterface {
     sex?: 'male' | 'female' | "";
     age?: number;
     weight?: number;
-    castrated?: 'c' | 's' | "";
+    sterelized?: SterilizedType;
     tasks?: Types.ObjectId[];
 };
