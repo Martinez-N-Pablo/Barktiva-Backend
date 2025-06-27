@@ -74,8 +74,8 @@ export const getPetById = async (petId: string, session?: ClientSession) => {
     return await Pet.findById(petId).populate('owner', 'name surname email').session(session || null);
 };
 
-export const deletePetService = async (petId: string, owner: string) => {
-    const pet = await Pet.findById(petId);
+export const deletePetService = async (petId: string, owner: string, session: ClientSession) => {
+  const pet = await Pet.findById(petId);
 
   if (!pet) {
     throw new Error('Mascota no encontrada.');
@@ -85,7 +85,11 @@ export const deletePetService = async (petId: string, owner: string) => {
     throw new Error('No tienes permiso para eliminar esta mascota.');
   }
 
-  await pet.deleteOne();
+  if(pet.photo) {
+    await deleteImageFromStorage(pet.photo);
+  }
+
+  await pet.deleteOne().session(session);;
   return pet;
 };
 

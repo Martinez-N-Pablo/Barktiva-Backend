@@ -6,10 +6,14 @@ import hassPassword from '../utils/hassPassword.js';
 import validatePassword from '../utils/validatePassword.js';
 import { Status } from '../utils/const/status.js';
 import * as UserService from '../services/user.service.js';
+import * as PetService from '../services/pet.service.js';
+import * as TaskService from '../services/task.service.js';
+
 import { SortOrder } from '../utils/const/sortOrder.js';
 import { bucket } from '../../../config/config-firebase.js';
 import { deleteImageFromStorage, uploadImageToStorage } from '../services/firebase.service.js';
 import { AuthenticatedRequest } from '../models/interfaces/authenticatedRequest.js';
+import mongoose from 'mongoose';
 
 export const createUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
  const { name, surname, email, password, confirmPassword, photo, birthdate } = req.body;
@@ -38,7 +42,12 @@ export const createUser = async (req: AuthenticatedRequest, res: Response): Prom
 
     res.status(Status.Correct).json({ message: 'Usuario creado con éxito.', user });
   } catch (error) {
-    res.status(Status.Error).json({ message: 'Error al crear el usuario.', error });
+    if ((error as any).code === 11000) {
+      res.status(Status.BadRequest).json({ message: 'Este correo electrónico ya está registrado.' });
+    }
+    else {
+      res.status(Status.Error).json({ message: 'Error al crear el usuario.', error });
+    }
     return;
   }
 };
@@ -115,11 +124,38 @@ export const deleteUser = async (req: AuthenticatedRequest, res: Response): Prom
     return;
   }
 
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    await UserService.deleteUser(uid);
+    const user = await UserService.deleteUser(uid);
+
+    if(!user) {
+      await session.abortTransaction();
+      res.status(Status.NotFound).json({ message: 'Usuario no encontrada' });
+      return;
+    }
+
+    //Mientras no se pueda compartir mascotas o tareas entre usuarios, se eliminan
+    if(Array.isArray(user.pets) && user.pets.length > 0) {
+      for(const pet of user.pets) {
+        await PetService.deletePetService(pet._id.toString(), user._id.toString(), session); 
+      }
+    }
+
+    if(Array.isArray(user.tasks) && user.tasks.length > 0) {
+      for(const task of user.tasks) {
+        await TaskService.deleteTaskService(task._id.toString(), user._id.toString(), session); 
+      }
+    }
+
+    await session.commitTransaction();
     res.status(Status.Correct).json({ message: 'Usuario eliminado con éxito.' });
   } catch (error) {
+    await session.abortTransaction();
     res.status(Status.Error).json({ message: 'Error al eliminar el usuario.', error: (error as Error).message });
+  } finally {
+    session.endSession();
   }
 };
 

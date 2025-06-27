@@ -26,10 +26,8 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
   session.startTransaction();
 
   try {
-    console.log("Entro al try")
     const [task] = await TaskService.createTaskService(req.body, session);
 
-    console.log("Paso el createTaskService");
     if (!task) {
       await session.abortTransaction();
       session.endSession();
@@ -38,7 +36,7 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
     }
 
     // Agregar la tarea al usuario
-    await UserService.addPetToUser(uid, task._id, session);
+    await UserService.addTaskToUser(uid, task._id, session);
 
     // Agregar la tarea a cada mascota individualmente
     await Promise.all(

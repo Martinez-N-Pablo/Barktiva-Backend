@@ -140,7 +140,7 @@ export const deletePet = async (req: AuthenticatedRequest, res: Response): Promi
   session.startTransaction();
 
   try {
-    const pet = await PetService.deletePetService(petId, uid);
+    const pet = await PetService.deletePetService(petId, uid, session);
 
     if(!pet) {
       await session.abortTransaction();
