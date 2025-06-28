@@ -60,6 +60,10 @@ const TaskSchema = new mongoose.Schema({
     type: String
   },
 
+  hourDosis: {
+    type: String,
+    required: true
+  },
   initialDate: {
     type: Date,
     required: true

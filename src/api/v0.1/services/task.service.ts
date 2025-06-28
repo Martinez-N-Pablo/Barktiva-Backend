@@ -124,9 +124,6 @@ export const removePetFromTask = async (taskId: string, petId: Types.ObjectId) =
 
     task.pets = task.pets.filter((pet: Types.ObjectId) => pet.toString() !== petId.toString());
 
-    console.log("Task tras delete");
-    console.log(task.pets);
-
     // Si después de filtrar no queda ninguna mascota, eliminamos la tarea
     if (Array.isArray(task.pets) && task.pets.length === 0) {
         await task.deleteOne();
