@@ -28,7 +28,7 @@ export const getTaskByIdService = async (ownerId: string): Promise<any> => {
             path: 'pets', // Si es un array de ObjectId se hace asi
             select: 'name'
         })
-        .populate('taskType');
+        .populate('taskType', '_id name photo');
 };
 
 export const deleteTaskService = async (taskId: string, owner: string, session: ClientSession) => {
@@ -81,7 +81,8 @@ export const getTasksService = async ({ page, size, sort, user, pets }: GetTaskI
         .populate({
             path: 'pets',
             select: 'name'
-        }),
+        })
+        .populate('taskType', '_id name photo'),
         Task.countDocuments(query)
     ]);
 
