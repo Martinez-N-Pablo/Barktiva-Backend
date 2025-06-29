@@ -1,4 +1,6 @@
 import Breed from "../models/breed.model.js";
+import axios from "axios";
+import { BreedsDogApi } from "../models/interfaces/breedsDogApi.js";
 
 export async function loadBreeds() {
   const initialBreeds = [
@@ -47,4 +49,60 @@ export async function loadBreeds() {
   await Breed.deleteMany({ name: { $nin: validNames } });
 
   console.log('Razas de perro sincronizadas correctamente');
+}
+
+/**
+ * 
+ * {
+      weight: [Object],
+      height: [Object],
+      id: 29,
+      name: 'Basset Bleu de Gascogne',
+      bred_for: 'Hunting on foot.',
+      breed_group: 'Hound',
+      life_span: '10 - 14 years',
+      temperament: 'Affectionate, Lively, Agile, Curious, Happy, Active',
+      reference_image_id: 'BkMQll94X',
+      image: [Object]
+    }
+ */
+export async function loadBreedsFromAPI() {
+  try {
+    const res = await axios.get('https://api.thedogapi.com/v1/breeds?limit=30', {
+      headers: {
+        'x-api-key': process.env.X_API_KEY || ""
+      }
+    });
+
+    if(!res) {
+      console.log("Error al obtener las razas de perro de la api")
+      return;
+    }
+
+    const breeds: BreedsDogApi[] = res.data as BreedsDogApi[];
+
+    const formattedBreeds = breeds.map((breed:BreedsDogApi) => ({
+      name: breed.name,
+      photo: breed.image?.url || '',
+    }));
+
+    for (const breed of formattedBreeds) {
+      await Breed.updateOne(
+        { name: breed.name },
+        { $set: { photo: breed.photo } },
+        { upsert: true }
+      );
+    }
+
+    const validNames = formattedBreeds.map(b => b.name);
+    await Breed.deleteMany({ name: { $nin: validNames } });
+
+    console.log('Razas sincronizadas desde TheDogAPI');
+  } catch (err) {
+    if (err instanceof Error) {
+      console.error('Error al cargar razas desde TheDogAPI:', err.message);
+    } else {
+      console.error('Error desconocido al cargar razas desde TheDogAPI:', err);
+    }
+  }
 }

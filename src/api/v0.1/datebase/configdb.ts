@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { loadTaskTypes } from '../utils/loadTaskTypes.js';
-import { loadBreeds } from '../utils/loadBreeds.js';
+import { loadBreedsFromAPI } from '../utils/loadBreeds.js';
 
 const connectionString: string | undefined = process.env.DBCON || "";
 
@@ -16,7 +16,7 @@ export async function connectDB(): Promise<void> {
     console.log(' Conectado a MongoDB correctamente');
 
     await loadTaskTypes();
-    await loadBreeds();
+    await loadBreedsFromAPI();
   } catch (error) {
     console.error(' Error al conectar a MongoDB:', error);
     process.exit(1);
