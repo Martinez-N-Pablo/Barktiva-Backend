@@ -7,6 +7,7 @@ import { AuthenticatedRequest } from '../models/interfaces/authenticatedRequest.
 import mongoose from 'mongoose';
 import { deleteImageFromStorage, uploadImageToStorage } from '../services/firebase.service.js';
 import * as TaskService from '../services/task.service.js';
+import { Types } from 'mongoose';
 
 export const createPet = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const owner: string = req.uid || "";
@@ -17,6 +18,11 @@ export const createPet = async (req: AuthenticatedRequest, res: Response): Promi
     return;
   }
 
+  if (Types.ObjectId.isValid(req.body.breed)) {
+    req.body.breed = new Types.ObjectId(req.body.breed);
+  } else {
+    throw new Error("El ID de la raza no es válido");
+  }
   req.body.owner = owner;
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -69,6 +75,8 @@ export const updatePet = async (req: AuthenticatedRequest, res: Response): Promi
     res.status(Status.BadRequest).json({ message: 'Falta el UID del usuario.' });
     return;
   }
+
+  petBodyUpdate.breed = new mongoose.Types.ObjectId(req.body.breed);
 
   try {
     if (req.file) {
@@ -163,5 +171,26 @@ export const deletePet = async (req: AuthenticatedRequest, res: Response): Promi
     res.status(Status.Error).json({ message: 'Error al eliminar la mascota.', error: (error as Error).message });
   } finally {
     session.endSession();
+  }
+};
+
+export const getBreeds = async(req: AuthenticatedRequest, res: Response) => {
+  const page: number = Number(process.env.page);
+  const size: number = Number(process.env.ILIMIT_SIZE) || 30;;
+  const sort: string = SortOrder.ASC || "";
+
+  try {
+    const pets = await PetService.getPetsBreedsService({
+      page: Number(page),
+      size: Number(size),
+      sort: String(sort),
+    });
+
+    res.status(Status.Correct).json(pets);
+  } catch (error) {
+    res.status(Status.Error).json({
+      message: 'Error al obtener las razas de perro',
+      error: (error as Error).message
+    });
   }
 };

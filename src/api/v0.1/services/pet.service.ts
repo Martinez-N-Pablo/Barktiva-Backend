@@ -2,6 +2,7 @@ import { ClientSession, Types } from "mongoose";
 import { PetInterface } from "../models/interfaces/pet.interface.js";
 import Pet from '../models/pets.model.js';
 import { deleteImageFromStorage, uploadImageToStorage } from "./firebase.service.js";
+import Breed from "../models/breed.model.js";
 
 interface GetPetsInterface {
     page: number;
@@ -9,6 +10,12 @@ interface GetPetsInterface {
     sort: string;
     owner?: Types.ObjectId | string;
 };
+
+interface GePetsBreedsInterface {
+    page: number;
+    size: number;
+    sort: string;
+}
 
 export const createPetService = async (petData: PetInterface, session: ClientSession) => {
     const newPet: PetInterface = petData;
@@ -57,7 +64,8 @@ export const getAllPetsService = async ({ page, size, sort, owner }: GetPetsInte
       .sort({ name: sort === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(size)
-      .populate('owner', 'name surname email'),
+      .populate('owner', 'name surname email')
+      .populate('breed', '_id name photo'),
     Pet.countDocuments(query)
   ]);
 
@@ -71,7 +79,7 @@ export const getAllPetsService = async ({ page, size, sort, owner }: GetPetsInte
 };
 
 export const getPetById = async (petId: string, session?: ClientSession) => {
-    return await Pet.findById(petId).populate('owner', 'name surname email').session(session || null);
+    return await Pet.findById(petId).populate('owner', 'name surname email').populate('breed', '_id name photo').session(session || null);
 };
 
 export const deletePetService = async (petId: string, owner: string, session: ClientSession) => {
@@ -127,4 +135,20 @@ export const removeTaskFromPet = async (petId: string, taskId: string, session: 
     await pet.save({session});
     
     return pet;
+};
+
+export const getPetsBreedsService = async ({ page, size, sort }: GePetsBreedsInterface): Promise<any> => {
+    const [petsBreeds, total] = await Promise.all([
+        Breed.find({})
+        .sort({ name: sort === 'asc' ? 1 : -1 })
+        .limit(size),
+        Breed.countDocuments({})
+    ]);
+    
+    return {
+        total,
+        page,
+        size,
+        petsBreeds
+    };
 };

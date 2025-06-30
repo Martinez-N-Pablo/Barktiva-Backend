@@ -16,6 +16,7 @@ const PetSchema = new mongoose.Schema({
 
   breed: {
     type: mongoose.Schema.Types.Mixed,
+    ref: 'Breed',
     required: true
   },
 
