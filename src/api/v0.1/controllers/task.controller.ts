@@ -62,10 +62,10 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
 };
 
 export const getTaskById = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { id } = req.params;
+  const { taskId } = req.params;
 
   try {
-    const task = await TaskService.getTaskByIdService(id);
+    const task = await TaskService.getTaskByIdService(taskId);
     
     if (!task) {
       res.status(Status.NotFound).json({ message: 'Tarea no encontrada' });

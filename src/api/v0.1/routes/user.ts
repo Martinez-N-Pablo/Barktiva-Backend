@@ -25,7 +25,7 @@ router.post('/:petId', validarJWT, addPetToUser);
  * Put
  */
 // Update user
-router.put('/', [validarJWT,  upload.single('photo')], updateUser);
+router.put('/', [validarJWT, upload.single('photo')], updateUser);
 // Change user password
 router.put('/:id/password', validarJWT, changePassword);
 

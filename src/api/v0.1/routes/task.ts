@@ -8,10 +8,10 @@ router.post('/', validarJWT, createTask);
 router.post('/tasks', validarJWT, getTasks);
 
 router.get('/taskTypes', [], getTaskTypes);
-router.get('/:id', validarJWT, getTaskById);
+router.get('/:taskId', validarJWT, getTaskById);
 
 router.put('/:taskId', validarJWT, updateTask);
-router.delete('/:taskId', validarJWT, deleteTask);
 
+router.delete('/:taskId', validarJWT, deleteTask);
 
 export default router;

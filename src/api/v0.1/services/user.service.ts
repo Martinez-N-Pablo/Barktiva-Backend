@@ -28,7 +28,7 @@ export const registerUser = async (input: RegisterInput) => {
     //Check if exits another user with the same email
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-        throw new Error('Ya existe una cuenta registrada con ese correo electrónico.');
+        throw { code: 11000, message: 'Este correo electrónico ya está registrado.' };
     }
 
     const hashed: string = hashPassword(password);

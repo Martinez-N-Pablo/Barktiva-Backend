@@ -17,15 +17,29 @@ interface GePetsBreedsInterface {
     sort: string;
 }
 
-export const createPetService = async (petData: PetInterface, session: ClientSession) => {
-    const newPet: PetInterface = petData;
-    return await Pet.create([newPet], {session});
+export const createPetService = async (petData: PetInterface, session: ClientSession, photo: string | undefined, file: Express.Multer.File | undefined): Promise<PetInterface> => {
+    const [pet] = await Pet.create([petData], { session });
+
+    if (!pet) {
+      throw new Error('Error al crear la mascota');
+    }
+
+    // Si hay imagen nueva, subirla y asignarla
+    if (file) {
+      const newFileName = `pets/${pet._id}_${Date.now()}.jpg`;
+      const imageUrl = await uploadImageToStorage(file, newFileName);
+
+      pet.photo = imageUrl;
+      await pet.save({ session });
+    }
+
+    return pet;
 };
 
 export const updatePetService = async (petId: string, updates: any): Promise<PetInterface> => {
     const NOT_ALLOWED_FIELDS = ['owner', 'uid']; // Campos NO modificables
 
-    const pet = await getPetById(petId);
+    const pet = await getPetByIdService(petId);
 
     if (!pet) {
         throw new Error('Mascota no encontrada.');
@@ -78,7 +92,7 @@ export const getAllPetsService = async ({ page, size, sort, owner }: GetPetsInte
   };
 };
 
-export const getPetById = async (petId: string, session?: ClientSession) => {
+export const getPetByIdService = async (petId: string, session?: ClientSession) => {
     return await Pet.findById(petId).populate('owner', 'name surname email').populate('breed', '_id name photo').session(session || null);
 };
 
@@ -102,7 +116,7 @@ export const deletePetService = async (petId: string, owner: string, session: Cl
 };
 
 export const addTaskToPet = async (petId: string, taskId: Types.ObjectId, session?: ClientSession) => {
-    const pet = await getPetById(petId);
+    const pet = await getPetByIdService(petId);
 
     if (!pet) {
       throw new Error('Mascota no encontrada.');
@@ -121,7 +135,7 @@ export const addTaskToPet = async (petId: string, taskId: Types.ObjectId, sessio
 };
 
 export const removeTaskFromPet = async (petId: string, taskId: string, session: ClientSession) => {
-    const pet = await getPetById(petId, session);
+    const pet = await getPetByIdService(petId, session);
 
     if (!pet) {
         throw new Error('Mascota no encontrada.');

@@ -43,7 +43,7 @@ export const createUser = async (req: AuthenticatedRequest, res: Response): Prom
     res.status(Status.Correct).json({ message: 'Usuario creado con éxito.', user });
   } catch (error) {
     if ((error as any).code === 11000) {
-      res.status(Status.BadRequest).json({ message: 'Este correo electrónico ya está registrado.' });
+      res.status(Status.Unicidad).json({ message: 'Este correo electrónico ya está registrado.' });
     }
     else {
       res.status(Status.Error).json({ message: 'Error al crear el usuario.', error });

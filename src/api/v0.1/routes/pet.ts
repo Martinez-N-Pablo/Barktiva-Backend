@@ -9,7 +9,7 @@ router.post('/', [validarJWT, upload.single('photo')], createPet);
 router.post('/pets', [validarJWT, upload.single('photo')], getPets);
 
 router.get('/breeds', validarJWT, getBreeds);
-router.get('/:id', validarJWT, getPetById);
+router.get('/:petId', validarJWT, getPetById);
 
 router.put('/:petId', [validarJWT,  upload.single('photo')], updatePet);
 

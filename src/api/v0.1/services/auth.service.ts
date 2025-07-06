@@ -64,7 +64,6 @@ export const loginService = async (email: string, password: string) => {
   const token = await generarJWT({ uid: user._id.toString(), role: user.role || "" });
 
   return {
-    message: 'Login exitoso',
     uid: user._id,
     name: user.name,
     surname: user.surname,

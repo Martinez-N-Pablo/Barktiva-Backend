@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 /**
  * 
- * @param file: Express.Multer.File; Arhivo procesa por multer en memoria
+ * @param file: Express.Multer.File; Archivo procesa por multer en memoria
  * @returns: Promise<string>; URL construida que apunta al archivo
  */
 export const uploadImageToStorage = async (file: Express.Multer.File, fileName: string): Promise<string> => {
