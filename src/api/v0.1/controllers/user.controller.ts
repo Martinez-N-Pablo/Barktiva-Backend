@@ -16,7 +16,7 @@ import { AuthenticatedRequest } from '../models/interfaces/authenticatedRequest.
 import mongoose from 'mongoose';
 
 export const createUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
- const { name, surname, email, password, confirmPassword, photo, birthdate } = req.body;
+  const { name, surname, email, password, confirmPassword, photo, birthdate } = req.body;
 
   if (!name || !email || !password) {
     res.status(Status.BadRequest).json({ message: 'Faltan campos obligatorios.' });
@@ -24,6 +24,7 @@ export const createUser = async (req: AuthenticatedRequest, res: Response): Prom
   }
   
   try {
+    console.log("crear usuario");
     const user = await UserService.registerUser({
       name,
       surname,
@@ -34,6 +35,9 @@ export const createUser = async (req: AuthenticatedRequest, res: Response): Prom
       birthdate,
       role: 'user'
     });
+
+    console.log("usuario creado");
+    
 
     if(!user) {
       res.status(Status.BadRequest).json({ message: 'Error al crear el usuario en service.' });
