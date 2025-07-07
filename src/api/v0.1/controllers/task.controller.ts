@@ -26,10 +26,8 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
   session.startTransaction();
 
   try {
-    console.log("Entro al try")
     const [task] = await TaskService.createTaskService(req.body, session);
 
-    console.log("Paso el createTaskService");
     if (!task) {
       await session.abortTransaction();
       session.endSession();
@@ -38,7 +36,7 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
     }
 
     // Agregar la tarea al usuario
-    await UserService.addPetToUser(uid, task._id, session);
+    await UserService.addTaskToUser(uid, task._id, session);
 
     // Agregar la tarea a cada mascota individualmente
     await Promise.all(
@@ -64,10 +62,10 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
 };
 
 export const getTaskById = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { id } = req.params;
+  const { taskId } = req.params;
 
   try {
-    const task = await TaskService.getTaskByIdService(id);
+    const task = await TaskService.getTaskByIdService(taskId);
     
     if (!task) {
       res.status(Status.NotFound).json({ message: 'Tarea no encontrada' });
@@ -82,6 +80,7 @@ export const getTaskById = async (req: AuthenticatedRequest, res: Response): Pro
     });
   }
 };
+
 export const deleteTask = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { taskId } = req.params;
   const uid = req.uid || "";

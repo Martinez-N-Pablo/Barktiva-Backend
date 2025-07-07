@@ -1,0 +1,12 @@
+import admin from 'firebase-admin';
+
+const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS || '{}');
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+    storageBucket: 'barktiva-b35a6.firebasestorage.app'
+  });
+}
+
+export const bucket = admin.storage().bucket();

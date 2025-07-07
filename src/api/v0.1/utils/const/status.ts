@@ -8,4 +8,5 @@ export const Status = {
     Conflict: 409,
     Error: 500,
     NotFound: 404,
+    Unicidad: 11000
 };

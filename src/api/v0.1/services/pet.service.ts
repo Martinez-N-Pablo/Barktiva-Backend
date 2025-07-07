@@ -1,6 +1,8 @@
 import { ClientSession, Types } from "mongoose";
 import { PetInterface } from "../models/interfaces/pet.interface.js";
 import Pet from '../models/pets.model.js';
+import { deleteImageFromStorage, uploadImageToStorage } from "./firebase.service.js";
+import Breed from "../models/breed.model.js";
 
 interface GetPetsInterface {
     page: number;
@@ -9,18 +11,49 @@ interface GetPetsInterface {
     owner?: Types.ObjectId | string;
 };
 
-export const createPetService = async (petData: PetInterface, session: ClientSession) => {
-    const newPet: PetInterface = petData;
-    return await Pet.create([newPet], {session});
+interface GePetsBreedsInterface {
+    page: number;
+    size: number;
+    sort: string;
+}
+
+export const createPetService = async (petData: PetInterface, session: ClientSession, photo: string | undefined, file: Express.Multer.File | undefined): Promise<PetInterface> => {
+    const [pet] = await Pet.create([petData], { session });
+
+    if (!pet) {
+      throw new Error('Error al crear la mascota');
+    }
+
+    // Si hay imagen nueva, subirla y asignarla
+    if (file) {
+      const newFileName = `pets/${pet._id}_${Date.now()}.jpg`;
+      const imageUrl = await uploadImageToStorage(file, newFileName);
+
+      pet.photo = imageUrl;
+      await pet.save({ session });
+    }
+
+    return pet;
 };
 
 export const updatePetService = async (petId: string, updates: any): Promise<PetInterface> => {
     const NOT_ALLOWED_FIELDS = ['owner', 'uid']; // Campos NO modificables
 
-    const pet = await getPetById(petId);
+    const pet = await getPetByIdService(petId);
 
     if (!pet) {
         throw new Error('Mascota no encontrada.');
+    }
+
+    if (updates.photoFile) {
+      if (pet.photo) { // si ya tenia una foto almacenada, la mandamos eliminar del firebase storage
+        await deleteImageFromStorage(pet.photo);
+      }
+
+      const newFileName = `pets/${pet._id}_${Date.now()}.jpg`;
+      const imageUrl = await uploadImageToStorage(updates.photoFile, newFileName);
+      
+      pet.photo = imageUrl;
     }
     
     // Filtrar solo los campos que se permiten actualizar
@@ -45,7 +78,8 @@ export const getAllPetsService = async ({ page, size, sort, owner }: GetPetsInte
       .sort({ name: sort === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(size)
-      .populate('owner', 'name surname email'),
+      .populate('owner', 'name surname email')
+      .populate('breed', '_id name photo'),
     Pet.countDocuments(query)
   ]);
 
@@ -58,12 +92,12 @@ export const getAllPetsService = async ({ page, size, sort, owner }: GetPetsInte
   };
 };
 
-export const getPetById = async (petId: string, session?: ClientSession) => {
-    return await Pet.findById(petId).populate('owner', 'name surname email').session(session || null);
+export const getPetByIdService = async (petId: string, session?: ClientSession) => {
+    return await Pet.findById(petId).populate('owner', 'name surname email').populate('breed', '_id name photo').session(session || null);
 };
 
-export const deletePetService = async (petId: string, owner: string) => {
-    const pet = await Pet.findById(petId);
+export const deletePetService = async (petId: string, owner: string, session: ClientSession) => {
+  const pet = await Pet.findById(petId);
 
   if (!pet) {
     throw new Error('Mascota no encontrada.');
@@ -73,12 +107,16 @@ export const deletePetService = async (petId: string, owner: string) => {
     throw new Error('No tienes permiso para eliminar esta mascota.');
   }
 
-  await pet.deleteOne();
+  if(pet.photo) {
+    await deleteImageFromStorage(pet.photo);
+  }
+
+  await pet.deleteOne().session(session);;
   return pet;
 };
 
 export const addTaskToPet = async (petId: string, taskId: Types.ObjectId, session?: ClientSession) => {
-    const pet = await getPetById(petId);
+    const pet = await getPetByIdService(petId);
 
     if (!pet) {
       throw new Error('Mascota no encontrada.');
@@ -97,7 +135,7 @@ export const addTaskToPet = async (petId: string, taskId: Types.ObjectId, sessio
 };
 
 export const removeTaskFromPet = async (petId: string, taskId: string, session: ClientSession) => {
-    const pet = await getPetById(petId, session);
+    const pet = await getPetByIdService(petId, session);
 
     if (!pet) {
         throw new Error('Mascota no encontrada.');
@@ -111,4 +149,20 @@ export const removeTaskFromPet = async (petId: string, taskId: string, session: 
     await pet.save({session});
     
     return pet;
+};
+
+export const getPetsBreedsService = async ({ page, size, sort }: GePetsBreedsInterface): Promise<any> => {
+    const [petsBreeds, total] = await Promise.all([
+        Breed.find({})
+        .sort({ name: sort === 'asc' ? 1 : -1 })
+        .limit(size),
+        Breed.countDocuments({})
+    ]);
+    
+    return {
+        total,
+        page,
+        size,
+        petsBreeds
+    };
 };

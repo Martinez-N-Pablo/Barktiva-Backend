@@ -5,8 +5,8 @@ import { login } from '../controllers/auth.controller.js';
 
 const router = Router();
 
-router.get('/verifyToken', validarJWT, validarToken);
-router.get('/renoveToken', validarJWT, renovarToken)
+router.get('/verifyToken', validarToken);
+router.get('/renoveToken', renovarToken)
 router.post('/', login);
 
 export default router;

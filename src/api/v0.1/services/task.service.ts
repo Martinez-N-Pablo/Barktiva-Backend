@@ -28,7 +28,7 @@ export const getTaskByIdService = async (ownerId: string): Promise<any> => {
             path: 'pets', // Si es un array de ObjectId se hace asi
             select: 'name'
         })
-        .populate('taskType');
+        .populate('taskType', '_id name photo');
 };
 
 export const deleteTaskService = async (taskId: string, owner: string, session: ClientSession) => {
@@ -69,10 +69,9 @@ export const getTasksService = async ({ page, size, sort, user, pets }: GetTaskI
     const skip = (page - 1) * size;
     const query: Record<string, any> = {};
 
-    if (user) query.owner = user;
+    if (user) query.user = user;
     if (pets && pets.length > 0) query.pets = { $in: pets };
 
-    console.log(query);
     const [tasks, total] = await Promise.all([
         Task.find(query)
         .sort({ name: sort === 'asc' ? 1 : -1 })
@@ -82,7 +81,8 @@ export const getTasksService = async ({ page, size, sort, user, pets }: GetTaskI
         .populate({
             path: 'pets',
             select: 'name'
-        }),
+        })
+        .populate('taskType', '_id name photo'),
         Task.countDocuments(query)
     ]);
 
@@ -114,3 +114,23 @@ export const getTaskTypesService = async ({ page, size, sort }: GetTaskTypesInte
 export const getTaskTypeByIdService = async(id: string) => {
     return await TaskTypes.findById(id);
 };
+
+export const removePetFromTask = async (taskId: string, petId: Types.ObjectId) => {
+    const task = await getTaskByIdService(taskId);
+    
+    if (!task.pets) {
+        throw new Error('La tarea no tiene mascotas asociadas.');
+    }
+
+    task.pets = task.pets.filter((pet: Types.ObjectId) => pet.toString() !== petId.toString());
+
+    // Si después de filtrar no queda ninguna mascota, eliminamos la tarea
+    if (Array.isArray(task.pets) && task.pets.length === 0) {
+        await task.deleteOne();
+        return null;
+    }
+
+    await task.save();
+    
+    return task;
+}

@@ -14,7 +14,8 @@ export interface TaskInterface {
   notification?: boolean;
   quantity?: number;
   routeAdministration?: string;
+  hourDosis: string;
   initialDate: Date;
-  finalDate?: Date;
+  finalDate: Date;
   description?: string;
 }

@@ -26,14 +26,14 @@ for (const file of files) {
     const module = await import(fullPath);  // Importación dinámica con ES Modules
 
     router.use(`/${fileWithoutExt}`, module.default); // Monta el router en su ruta
-    console.log(`✅ Ruta cargada: /${fileWithoutExt}`);
+    console.log(`Ruta cargada: /${fileWithoutExt}`);
     hasLoadedRoutes = true;
   }
 }
 
 // Si no hay rutas cargadas, responder con error en /api/
 if (!hasLoadedRoutes) {
-  console.warn('⚠️ No se encontraron rutas disponibles.');
+  console.warn('No se encontraron rutas disponibles.');
   router.get('/', (req, res) => {
     res.status(404).json({ error: 'No se encontraron rutas definidas' });
   });

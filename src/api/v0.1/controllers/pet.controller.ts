@@ -4,32 +4,35 @@ import * as PetService from '../services/pet.service.js';
 import * as UserService from '../services/user.service.js';
 import { SortOrder } from '../utils/const/sortOrder.js';
 import { AuthenticatedRequest } from '../models/interfaces/authenticatedRequest.js';
-import mongoose from 'mongoose';
+import mongoose, { ClientSession } from 'mongoose';
+import { deleteImageFromStorage, uploadImageToStorage } from '../services/firebase.service.js';
+import * as TaskService from '../services/task.service.js';
+import { Types } from 'mongoose';
 
 export const createPet = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const owner: string = req.uid || "";
+  const { photo, ...petBody } = req.body;
 
   if (!owner) {
     res.status(Status.BadRequest).json({ message: 'Falta el identificador del usuario.' });
     return;
   }
 
-  req.body.owner = owner;
-  const session = await mongoose.startSession();
+  if (Types.ObjectId.isValid(petBody.breed)) {
+    petBody.breed = new Types.ObjectId(petBody.breed);
+  } else {
+    throw new Error("El ID de la raza no es válido");
+  }
+
+  petBody.owner = owner;
+  const session: ClientSession = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const [pet] = await PetService.createPetService(req.body, session);
-
-    if(!pet) {
-      await session.abortTransaction();
-      session.endSession();
-    }
-
-    if(pet) {
-      await UserService.addPetToUser(owner, pet._id, session);
-    }
-
+    const pet = await PetService.createPetService(petBody, session, photo, req.file);
+    
+    await UserService.addPetToUser(owner, pet._id, session);
+    
     await session.commitTransaction();
     res.status(Status.Correct).json({
       message: 'Mascota registrada correctamente',
@@ -57,7 +60,13 @@ export const updatePet = async (req: AuthenticatedRequest, res: Response): Promi
     return;
   }
 
+  petBodyUpdate.breed = new mongoose.Types.ObjectId(req.body.breed);
+
   try {
+    if (req.file) {
+      petBodyUpdate.photoFile = req.file;
+    }
+    
     const updatedPet = await PetService.updatePetService(petId, petBodyUpdate);
 
     if (!updatedPet) {
@@ -96,10 +105,10 @@ export const getPets = async (req: AuthenticatedRequest, res: Response): Promise
 };
 
 export const getPetById = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { id } = req.params;
+  const { petId } = req.params;
 
   try {
-    const pet = await PetService.getPetById(id);
+    const pet = await PetService.getPetByIdService(petId);
 
     if (!pet) {
       res.status(Status.NotFound).json({ message: 'Mascota no encontrada' });
@@ -119,14 +128,53 @@ export const deletePet = async (req: AuthenticatedRequest, res: Response): Promi
   const { petId } = req.params;
   const uid: string = req.uid || "";
 
-  try {
-    const pet = await PetService.deletePetService(petId, uid);
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-    if(pet) {
-      await UserService.removePetFromUser(pet.owner.toString(), pet._id);
+  try {
+    const pet = await PetService.deletePetService(petId, uid, session);
+
+    if(!pet) {
+      await session.abortTransaction();
+      res.status(Status.NotFound).json({ message: 'Tarea no encontrada' });
+      return;
     }
+
+    await UserService.removePetFromUser(pet.owner.toString(), pet._id);
+
+    if(pet.tasks) {
+      for(const task of pet.tasks) {
+        await TaskService.removePetFromTask(task._id.toString(), pet._id);
+      }
+    }
+    
+    await session.commitTransaction();
     res.status(Status.Correct).json({ message: 'Mascota eliminada con éxito.' });
   } catch (error) {
+    await session.abortTransaction();
     res.status(Status.Error).json({ message: 'Error al eliminar la mascota.', error: (error as Error).message });
+  } finally {
+    session.endSession();
+  }
+};
+
+export const getBreeds = async(req: AuthenticatedRequest, res: Response) => {
+  const page: number = Number(process.env.page);
+  const size: number = Number(process.env.ILIMIT_SIZE) || 30;;
+  const sort: string = SortOrder.ASC || "";
+
+  try {
+    const pets = await PetService.getPetsBreedsService({
+      page: Number(page),
+      size: Number(size),
+      sort: String(sort),
+    });
+
+    res.status(Status.Correct).json(pets);
+  } catch (error) {
+    res.status(Status.Error).json({
+      message: 'Error al obtener las razas de perro',
+      error: (error as Error).message
+    });
   }
 };

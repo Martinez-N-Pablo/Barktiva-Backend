@@ -5,6 +5,7 @@ import validatePassword from '../utils/validatePassword.js';
 import { verifyCurrentPassword } from '../utils/verifyCurrentPassword.js';
 import { PetInterface } from '../models/interfaces/pet.interface.js';
 import { ClientSession, Types } from 'mongoose';
+import { deleteImageFromStorage } from './firebase.service.js';
 
 interface RegisterInput extends UserInterface {
     confirmPassword: string;
@@ -18,16 +19,23 @@ interface GetUsersOptions {
 }
 
 export const registerUser = async (input: RegisterInput) => {
-    const { password, confirmPassword, ...rest } = input;
+    const { password, confirmPassword, email, ...rest } = input;
 
     if (!validatePassword(password, confirmPassword)) {
         throw new Error('Las contraseñas no coinciden.');
+    }
+
+    //Check if exits another user with the same email
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        throw { code: 11000, message: 'Este correo electrónico ya está registrado.' };
     }
 
     const hashed: string = hashPassword(password);
 
     const newUser: UserInterface = {
         ...rest,
+        email,
         password: hashed,
         birthdate: input.birthdate ? new Date(input.birthdate) : undefined
     };
@@ -74,7 +82,7 @@ export const changeUserPassword = async (
 };
 
 const findUserById = async (id: string, session?: ClientSession) => {
-    const query = User.findById(id);
+    const query = User.findById(id).select('-password');;
     
     // Si hay sesion, la aplicamos
     if (session) {
@@ -89,7 +97,10 @@ const findUserById = async (id: string, session?: ClientSession) => {
 };
 
 export const getUserById = async (id: string) => {
-    const user = await User.findById(id).select('-password'); // Menos password
+    const user = await User.findById(id)
+        .select('-password')
+        .populate("pets", "_id name")
+        .populate("tasks", "_id name"); // Menos password
     if (!user) throw new Error('Usuario no encontrado.');
     return user;
 };
@@ -97,6 +108,12 @@ export const getUserById = async (id: string) => {
 export const deleteUser = async (id: string) => {
     const user = await User.findByIdAndDelete(id);
     if (!user) throw new Error('Usuario no encontrado o ya eliminado.');
+
+    if(user.photo) {
+      await deleteImageFromStorage(user.photo);  
+    }
+
+    return user;
 };
 
 export const getUsers = async ({ page, size, sort, dni }: GetUsersOptions) => {
@@ -156,7 +173,7 @@ export const removePetFromUser = async (userId: string, petId: Types.ObjectId) =
     return user;
 }
 
-export const addTaskToUser = async (userId: string, taskId: Types.ObjectId) => {
+export const addTaskToUser = async (userId: string, taskId: Types.ObjectId, session: ClientSession) => {
     const user = await findUserById(userId);
     
     if (!user.tasks) {
@@ -164,7 +181,7 @@ export const addTaskToUser = async (userId: string, taskId: Types.ObjectId) => {
     }
 
     user.tasks.push(taskId);
-    await user.save();
+    await user.save({ session });
     
     return user;
 }
