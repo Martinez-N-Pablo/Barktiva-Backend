@@ -2,10 +2,6 @@ import 'dotenv/config';
 import cors from 'cors';
 import { connectDB } from './api/v0.1/datebase/configdb.js';
 import router from './api/v0.1/routes/index.js';
-import routerUser from './api/v0.1/routes/user.js';
-import routerPet from './api/v0.1/routes/pet.js';
-import routerAuth from './api/v0.1/routes/auth.js';
-import routerTask from './api/v0.1/routes/task.js';
 import express, { Request, Response, NextFunction } from 'express';
 
 //Initialize express app
@@ -14,7 +10,7 @@ const app = express();
 connectDB();
 
 app.use(cors({
-  origin: 'http://localhost:4200', // URL del servidor cuando se compre
+  origin: ['http://localhost:4200', 'capacitor://localhost', 'ionic://localhost'], // URL del servidor cuando se compre
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
@@ -25,10 +21,6 @@ app.use(express.json());
  * IMPORTANTE: NO HACE FALTA AÑADIR NINGUNA RUTA NUEVA
  */
 app.use('/api', router);
-// app.use('/api/user', routerUser);
-// app.use('/api/pet', routerPet);
-// app.use('/api/auth', routerAuth);
-// app.use('/api/task', routerTask);
 
 app.listen(process.env.PORT, () => {
     console.log(`Backend running on PORT: ${process.env.PORT}`);
