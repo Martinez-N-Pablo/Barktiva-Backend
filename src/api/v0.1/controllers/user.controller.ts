@@ -25,6 +25,7 @@ export const createUser = async (req: AuthenticatedRequest, res: Response): Prom
   
   try {
     console.log("crear usuario");
+    console.log(name, surname, email, password, confirmPassword, photo, birthdate)
     const user = await UserService.registerUser({
       name,
       surname,
