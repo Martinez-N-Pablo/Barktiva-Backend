@@ -1,8 +1,12 @@
 import mongoose from 'mongoose';
 import { loadTaskTypes } from '../utils/loadTaskTypes.js';
 import { loadBreedsFromAPI } from '../utils/loadBreeds.js';
+import { ServerApiVersion } from 'mongodb';
 
 const connectionString: string | undefined = process.env.DBCON || "";
+
+console.log("Base de datos");
+console.log(connectionString);
 
 if (!connectionString) {
   throw new Error('La variable de entorno DBCON no está definida');
@@ -10,7 +14,18 @@ if (!connectionString) {
 
 export async function connectDB(): Promise<void> {
   try {
-    await mongoose.connect(connectionString || "");
+    const options = {
+      serverApi: {
+        version: ServerApiVersion.v1, // Version estable de la API
+        strict: true,
+        deprecationErrors: true,
+      },
+      useNewUrlParser: true, // analizador URL actualizado
+      useUnifiedTopology: true, // Usa el topology engine moderno
+    };
+
+    await mongoose.connect((connectionString || ""), options);
+    
     console.log(' Conectado a MongoDB correctamente');
 
     await loadTaskTypes();
