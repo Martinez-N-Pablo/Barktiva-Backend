@@ -6,11 +6,6 @@ if (!serviceAccount) {
   throw new Error('FIREBASE_CREDENTIALS no está definida');
 }
 
-console.log("serviceAccount");
-console.log("Raw string:", serviceAccount.slice(0, 100));
-
-//Corregir error de railway
-
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
