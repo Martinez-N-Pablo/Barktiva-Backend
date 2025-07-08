@@ -20,8 +20,6 @@ export async function connectDB(): Promise<void> {
         strict: true,
         deprecationErrors: true,
       },
-      useNewUrlParser: true, // analizador URL actualizado
-      useUnifiedTopology: true, // Usa el topology engine moderno
     };
 
     await mongoose.connect((connectionString || ""), options);
