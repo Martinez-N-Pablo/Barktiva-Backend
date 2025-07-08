@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "barktiva",
   "version": "1.0.0",
   "main": "dist/index.js",
   "type": "module",
@@ -12,9 +12,9 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "Pablo Martínez",
   "license": "ISC",
-  "description": "",
+  "description": "Backend de Barktiva",
   "dependencies": {
     "@types/express-jwt": "^6.0.4",
     "@types/path-to-regexp": "^1.0.29",
