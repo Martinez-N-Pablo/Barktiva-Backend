@@ -23,5 +23,5 @@ export async function loadTaskTypes() {
   const validNames = initialTaskTypes.map(t => t.name);
   await TaskTypes.deleteMany({ name: { $nin: validNames } });
 
-  console.log('Tipos de tareas sincronizados correctamente');
+  console.log('Tipos de tareas sincronizados correctamente.');
 }
