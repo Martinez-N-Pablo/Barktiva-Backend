@@ -34,3 +34,8 @@ app.use((err: Error & { status?: number }, req: Request, res: Response, next: Ne
     message: err.message
   });
 });
+// Show user
+app.use((req, res, next) => {
+  console.log(`Incoming request from origin: ${req.headers.origin}`);
+  next();
+});
