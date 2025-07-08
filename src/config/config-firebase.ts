@@ -1,6 +1,11 @@
 import admin from 'firebase-admin';
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS || '{}');
+const rawCredentials = JSON.parse(process.env.FIREBASE_CREDENTIALS || '{}');
+
+//Corregir error de railway
+const serviceAccount = JSON.parse(
+  rawCredentials.replace(/\\n/g, '\n')
+);
 
 if (!admin.apps.length) {
   admin.initializeApp({
