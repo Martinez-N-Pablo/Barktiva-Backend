@@ -1,19 +1,15 @@
 import admin from 'firebase-admin';
 
-const rawCredentials = JSON.parse(process.env.FIREBASE_CREDENTIALS || '{}');
+const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS || '{}');
 
-if (!rawCredentials) {
+if (!serviceAccount) {
   throw new Error('FIREBASE_CREDENTIALS no está definida');
 }
 
 console.log("serviceAccount");
-console.log(rawCredentials);
+console.log("Raw string:", serviceAccount.slice(0, 100));
 
 //Corregir error de railway
-const serviceAccount = JSON.parse(
-  rawCredentials.replace(/\\n/g, '\n')
-);
-
 
 if (!admin.apps.length) {
   admin.initializeApp({
