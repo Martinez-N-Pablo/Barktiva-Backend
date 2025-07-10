@@ -168,7 +168,7 @@ export const deletePet = async (req: AuthenticatedRequest, res: Response): Promi
 
     if(pet.tasks) {
       for(const task of pet.tasks) {
-        await TaskService.removePetFromTask(task._id.toString(), pet._id);
+        await TaskService.removePetFromTask(task._id.toString(), pet._id, session, uid);
       }
     }
     
