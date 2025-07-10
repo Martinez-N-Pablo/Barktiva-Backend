@@ -11,7 +11,8 @@ import { Types } from 'mongoose';
 
 export const createPet = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const owner: string = req.uid || "";
-  const { photo, ...petBody } = req.body;
+  const { ...petBody } = req.body;
+  const photo = req.body.photo;
 
   if (!owner) {
     res.status(Status.BadRequest).json({ message: 'Falta el identificador del usuario.' });
@@ -25,11 +26,30 @@ export const createPet = async (req: AuthenticatedRequest, res: Response): Promi
   }
 
   petBody.owner = owner;
+
+  console.log(petBody);
   const session: ClientSession = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const pet = await PetService.createPetService(petBody, session, photo, req.file);
+    const [pet] = await PetService.createPetService(petBody, session);
+
+     if(!pet) {
+      await session.abortTransaction();
+      session.endSession();
+    }
+
+    if (req.file) {
+      if (photo) { // si ya tenia una foto almacenada, la mandamos eliminar del firebase storage
+        await deleteImageFromStorage(photo);
+      }
+
+      const newFileName = `pets/${pet._id}_${Date.now()}.jpg`;
+      const imageUrl = await uploadImageToStorage(req.file, newFileName);
+      
+      pet.photo = imageUrl;
+      await pet.save({ session });
+    }
     
     await UserService.addPetToUser(owner, pet._id, session);
     
