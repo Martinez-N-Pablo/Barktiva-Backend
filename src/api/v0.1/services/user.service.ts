@@ -21,19 +21,14 @@ interface GetUsersOptions {
 export const registerUser = async (input: RegisterInput) => {
     const { password, confirmPassword, email, ...rest } = input;
 
-    console.log("Servicio crear usuario");
     if (!validatePassword(password, confirmPassword)) {
         throw new Error('Las contraseñas no coinciden.');
     }
 
     //Check if exits another user with the same email
     const existingUser = await User.findOne({ email });
-    // if (existingUser) {
-    //     throw { code: 11000, message: 'Este correo electrónico ya está registrado.' };
-    // }
-    console.log("El usuario no existe");
+
     const hashed: string = hashPassword(password);
-    console.log("Has de la contaseña")
 
     const newUser: UserInterface = {
         ...rest,
@@ -43,7 +38,6 @@ export const registerUser = async (input: RegisterInput) => {
     };
 
     const user = await User.create(newUser);
-        console.log("Nuevo usuario creado");
     return user;
 };
 

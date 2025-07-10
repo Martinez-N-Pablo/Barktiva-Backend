@@ -24,8 +24,6 @@ export const createUser = async (req: AuthenticatedRequest, res: Response): Prom
   }
   
   try {
-    console.log("crear usuario");
-    console.log(name, surname, email, password, confirmPassword, photo, birthdate)
     const user = await UserService.registerUser({
       name,
       surname,
@@ -36,10 +34,7 @@ export const createUser = async (req: AuthenticatedRequest, res: Response): Prom
       birthdate,
       role: 'user'
     });
-
-    console.log("usuario creado");
     
-
     if(!user) {
       res.status(Status.BadRequest).json({ message: 'Error al crear el usuario en service.' });
       return;

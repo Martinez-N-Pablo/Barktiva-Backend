@@ -5,9 +5,6 @@ import { ServerApiVersion } from 'mongodb';
 
 const connectionString: string | undefined = process.env.DBCON || "";
 
-console.log("Base de datos");
-console.log(connectionString);
-
 if (!connectionString) {
   throw new Error('La variable de entorno DBCON no está definida');
 }

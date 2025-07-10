@@ -18,8 +18,10 @@ interface GePetsBreedsInterface {
 }
 
 export const createPetService = async (petData: any, session: ClientSession) => {
-    const newPet: PetInterface = petData;
-    return await Pet.create([newPet], {session});
+  console.log("servicio")
+  const newPet: PetInterface = petData;
+
+  return await Pet.create([newPet], {session});
 };
 
 export const updatePetService = async (petId: string, updates: any): Promise<PetInterface> => {

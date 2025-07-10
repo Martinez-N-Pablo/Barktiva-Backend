@@ -8,6 +8,7 @@ import mongoose, { ClientSession } from 'mongoose';
 import { deleteImageFromStorage, uploadImageToStorage } from '../services/firebase.service.js';
 import * as TaskService from '../services/task.service.js';
 import { Types } from 'mongoose';
+import { SterilizedValue } from '../models/interfaces/sterelized.js';
 
 export const createPet = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const owner: string = req.uid || "";
@@ -27,12 +28,15 @@ export const createPet = async (req: AuthenticatedRequest, res: Response): Promi
 
   petBody.owner = owner;
 
+  console.log(SterilizedValue);
+  console.log("Llega:")
   console.log(petBody);
   const session: ClientSession = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const [pet] = await PetService.createPetService(petBody, session);
+      console.log("controller tras create")
 
      if(!pet) {
       await session.abortTransaction();
