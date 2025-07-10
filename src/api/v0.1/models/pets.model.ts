@@ -36,7 +36,7 @@ const PetSchema = new mongoose.Schema({
     type: Number
   },
 
-  sterelized: {
+  sterilized: {
     type: String,
     enum: [...Object.values(SterilizedValue), ''],
     default: ''
