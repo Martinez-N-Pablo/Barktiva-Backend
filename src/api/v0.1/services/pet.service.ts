@@ -17,23 +17,9 @@ interface GePetsBreedsInterface {
     sort: string;
 }
 
-export const createPetService = async (petData: PetInterface, session: ClientSession, photo: string | undefined, file: Express.Multer.File | undefined): Promise<PetInterface> => {
-    const [pet] = await Pet.create([petData], { session });
-
-    if (!pet) {
-      throw new Error('Error al crear la mascota');
-    }
-
-    // Si hay imagen nueva, subirla y asignarla
-    if (file) {
-      const newFileName = `pets/${pet._id}_${Date.now()}.jpg`;
-      const imageUrl = await uploadImageToStorage(file, newFileName);
-
-      pet.photo = imageUrl;
-      await pet.save({ session });
-    }
-
-    return pet;
+export const createPetService = async (petData: any, session: ClientSession) => {
+    const newPet: PetInterface = petData;
+    return await Pet.create([newPet], {session});
 };
 
 export const updatePetService = async (petId: string, updates: any): Promise<PetInterface> => {
