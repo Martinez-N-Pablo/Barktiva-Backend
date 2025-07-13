@@ -28,15 +28,11 @@ export const createPet = async (req: AuthenticatedRequest, res: Response): Promi
 
   petBody.owner = owner;
 
-  console.log(SterilizedValue);
-  console.log("Llega:")
-  console.log(petBody);
   const session: ClientSession = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const [pet] = await PetService.createPetService(petBody, session);
-      console.log("controller tras create")
 
      if(!pet) {
       await session.abortTransaction();
