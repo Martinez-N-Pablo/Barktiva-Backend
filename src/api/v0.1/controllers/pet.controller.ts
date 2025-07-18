@@ -11,8 +11,8 @@ import { Types } from 'mongoose';
 import { SterilizedValue } from '../models/interfaces/sterelized.js';
 
 export const createPet = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  console.log("Controller");
   const owner: string = req.uid || "";
-  const { ...petBody } = req.body;
   const photo = req.body.photo;
 
   console.log("Hola");
@@ -23,19 +23,19 @@ export const createPet = async (req: AuthenticatedRequest, res: Response): Promi
     return;
   }
 
-  if (Types.ObjectId.isValid(petBody.breed)) {
-    petBody.breed = new Types.ObjectId(petBody.breed);
+  if (Types.ObjectId.isValid(req.body.breed)) {
+    req.body.breed = new Types.ObjectId(req.body.breed);
   } else {
     throw new Error("El ID de la raza no es válido");
   }
 
-  petBody.owner = owner;
+  req.body.owner = owner;
 
   const session: ClientSession = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const [pet] = await PetService.createPetService(petBody, session);
+    const [pet] = await PetService.createPetService(req.body, session);
 
      if(!pet) {
       await session.abortTransaction();
