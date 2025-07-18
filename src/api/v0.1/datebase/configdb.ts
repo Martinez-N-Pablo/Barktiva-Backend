@@ -21,12 +21,12 @@ export async function connectDB(): Promise<void> {
 
     await mongoose.connect((connectionString || ""), options);
     
-    console.log(' Conectado a MongoDB correctamente');
+    console.log('Conectado a MongoDB correctamente');
 
     await loadTaskTypes();
     await loadBreedsFromAPI();
   } catch (error) {
-    console.error(' Error al conectar a MongoDB:', error);
+    console.error('Error al conectar a MongoDB:', error);
     process.exit(1);
   }
 }
