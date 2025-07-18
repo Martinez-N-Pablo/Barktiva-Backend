@@ -15,6 +15,9 @@ export const createPet = async (req: AuthenticatedRequest, res: Response): Promi
   const { ...petBody } = req.body;
   const photo = req.body.photo;
 
+  console.log("Hola");
+  console.log(req.body)
+
   if (!owner) {
     res.status(Status.BadRequest).json({ message: 'Falta el identificador del usuario.' });
     return;
