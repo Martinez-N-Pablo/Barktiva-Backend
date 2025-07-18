@@ -75,7 +75,7 @@ export async function loadBreedsFromAPI() {
     });
 
     if(!res) {
-      console.log("Error al obtener las razas de perro de la api")
+      console.log("Error al obtener las razas de perro de la api");
       return;
     }
 

@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { loadTaskTypes } from '../utils/loadTaskTypes.js';
 import { loadBreedsFromAPI } from '../utils/loadBreeds.js';
 import { ServerApiVersion } from 'mongodb';
+import { loadToxic } from '../utils/loadToxics.js';
 
 const connectionString: string | undefined = process.env.DBCON || "";
 
@@ -21,12 +22,13 @@ export async function connectDB(): Promise<void> {
 
     await mongoose.connect((connectionString || ""), options);
     
-    console.log(' Conectado a MongoDB correctamente');
+    console.log('Conectado a MongoDB correctamente');
 
     await loadTaskTypes();
     await loadBreedsFromAPI();
+    await loadToxic();
   } catch (error) {
-    console.error(' Error al conectar a MongoDB:', error);
+    console.error('Error al conectar a MongoDB:', error);
     process.exit(1);
   }
 }

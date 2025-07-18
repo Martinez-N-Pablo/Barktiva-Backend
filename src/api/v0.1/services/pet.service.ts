@@ -18,7 +18,6 @@ interface GePetsBreedsInterface {
 }
 
 export const createPetService = async (petData: any, session: ClientSession) => {
-  console.log("servicio")
   const newPet: PetInterface = petData;
 
   return await Pet.create([newPet], {session});
