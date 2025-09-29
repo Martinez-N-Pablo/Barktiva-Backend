@@ -11,12 +11,8 @@ import { Types } from 'mongoose';
 import { SterilizedValue } from '../models/interfaces/sterelized.js';
 
 export const createPet = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  console.log("Controller");
   const owner: string = req.uid || "";
   const photo = req.body.photo;
-
-  console.log("Hola");
-  console.log(req.body)
 
   if (!owner) {
     res.status(Status.BadRequest).json({ message: 'Falta el identificador del usuario.' });
@@ -37,7 +33,7 @@ export const createPet = async (req: AuthenticatedRequest, res: Response): Promi
   try {
     const [pet] = await PetService.createPetService(req.body, session);
 
-     if(!pet) {
+    if(!pet) {
       await session.abortTransaction();
       session.endSession();
     }
