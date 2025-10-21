@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
-import { renovarTokenService, validarTokenService, loginService } from '../services/auth.service.js';
+import { renovarTokenService, validarTokenService, loginService, findOrCreateUserByFirebaseToken } from '../services/auth.service.js';
 import { Status } from '../utils/const/status.js';
+import * as admin from 'firebase-admin';
 
 export const renovarToken = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -93,4 +94,21 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       message: (error as Error).message || 'Error en login',
     });
   }
+};
+
+export const loginWithFirebase = async (req: Request, res: Response): Promise<void> => {
+  const { idToken } = req.body;
+
+  if(!idToken) {
+    res.status(Status.BadRequest).json({ message: 'Falta el idToken' });
+    return;
+  }
+
+  const decodedUser = await admin.auth().verifyIdToken(idToken).catch((error) => res.status(Status.BadRequest).json({ message: 'Token inválido' }));
+
+  if (!decodedUser) {
+    return;
+  }
+
+  const user = await findOrCreateUserByFirebaseToken(decodedUser);
 };

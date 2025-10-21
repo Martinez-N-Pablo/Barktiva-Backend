@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
 import { generarJWT } from '../utils/jwt.js';
 import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 
 interface JwtPayload {
   uid: string;
@@ -49,7 +50,7 @@ export const validarTokenService = async (token: string) => {
   };
 };
 
-export const loginService = async (email: string, password: string) => {
+export const loginService = async (email: string, password: string): Promise<{ uid: mongoose.Types.ObjectId, name: string, surname: string | undefined, email: string, token: string }>  => {
   const user = await User.findOne({ email });
 
   if (!user) {
@@ -71,3 +72,5 @@ export const loginService = async (email: string, password: string) => {
     token
   };
 };
+
+export const findOrCreateUserByFirebaseToken = async (decodedToken: any) => {};
