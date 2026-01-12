@@ -49,6 +49,27 @@ const UserSchema: Schema = new mongoose.Schema({
     type: String,
     enum: Roles,
     default: Roles.user
+  },
+
+  firebase_uid: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+
+  proveider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local'
+  },
+
+  lastLoginAt: {
+    type: Date,
+  },
+  
+  disabled: {
+    type: Boolean,
+    default: false
   }
 });
 

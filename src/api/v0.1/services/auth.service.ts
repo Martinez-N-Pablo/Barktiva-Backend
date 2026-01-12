@@ -73,4 +73,19 @@ export const loginService = async (email: string, password: string): Promise<{ u
   };
 };
 
-export const findOrCreateUserByFirebaseToken = async (decodedToken: any) => {};
+export const findOrCreateUserByFirebaseToken = async (decodedToken: any) => {
+  const firebase_uid = decodedToken?.uid;
+  const email = decodedToken?.email;
+  const name = decodedToken?.name || '';
+  const surname = decodedToken?.surname || '';
+  const photo = decodedToken?.picture || '';
+  const provider = decodedToken?.firebase?.sign_in_provider || 'google';
+
+  // Check if token has email and firebase_uid
+  if (!firebase_uid || !email) {
+    throw new Error('Token de Firebase inválido');
+  }
+
+  // Check if user exists by firebase_uid
+  let user = await User.findOne({ firebase_uid: firebase_uid });
+};

@@ -110,5 +110,9 @@ export const loginWithFirebase = async (req: Request, res: Response): Promise<vo
     return;
   }
 
+  console.log("Token recibido de Firebase:", idToken);
+  console.log("Decoded user from Firebase:");
+  console.log(decodedUser);
+
   const user = await findOrCreateUserByFirebaseToken(decodedUser);
 };
