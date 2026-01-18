@@ -10,4 +10,5 @@ export interface UserInterface {
   pets?: Types.ObjectId[];
   tasks?: Types.ObjectId[];
   role?: 'admin' | 'user';
+  firebase_uid?: string;
 }

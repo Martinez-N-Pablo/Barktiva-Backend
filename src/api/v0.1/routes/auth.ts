@@ -7,7 +7,7 @@ const router = Router();
 
 router.get('/verifyToken', validarToken);
 router.get('/renoveToken', renovarToken);
-router.get('/auth/firebase', loginWithFirebase);
+router.get('/firebase', loginWithFirebase);
 router.post('/', login);
 
 export default router;

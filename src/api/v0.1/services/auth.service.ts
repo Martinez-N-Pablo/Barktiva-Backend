@@ -3,6 +3,7 @@ import User from '../models/user.model.js';
 import { generarJWT } from '../utils/jwt.js';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
+import { FirebaseLoginType } from '../models/interfaces/firebaseLoginType.type.js';
 
 interface JwtPayload {
   uid: string;
@@ -88,4 +89,22 @@ export const findOrCreateUserByFirebaseToken = async (decodedToken: any) => {
 
   // Check if user exists by firebase_uid
   let user = await User.findOne({ firebase_uid: firebase_uid });
+};
+
+/**
+ * Creates or retrieves a local user account from a verified Firebase ID token.
+ * 
+ * Strategy:
+ *  1) If a user already exists with this firebaseUid, treat it as a normal login and update basic profile/lastLogin.
+ *  2) Otherwise, if the token contains a verified email and a local user exists with that email, link the accounts
+ *     by storing firebaseUid/provider on the existing user (account merge).
+ *  3) If no matching local user exists, create a new one using the verified token claims.
+ * Notes:
+ * - Trust only values extracted from `verifyIdToken()` (server-side verified JWT), never from client-provided fields.
+ * - `firebase_uid` should be UNIQUE, and `email` should be UNIQUE to avoid duplicates and race conditions.
+ * 
+ * @param decodedToken: FirebaseLoginType; User decoded data from firebase
+ */
+export const findOrLinkOrCreateUserFromFirebase = async (decodedToken: FirebaseLoginType) => {
+  const { firebaseUid, email, emailVerified, provider, displayName, photoUrl } = decodedToken;
 };
