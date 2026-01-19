@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { renovarTokenService, validarTokenService, loginService, findOrCreateUserByFirebaseToken, findOrLinkOrCreateUserFromFirebase } from '../services/auth.service.js';
+import { renovarTokenService, validarTokenService, loginService, findOrLinkOrCreateUserFromFirebase } from '../services/auth.service.js';
 import { Status } from '../utils/const/status.js';
 // import * as admin from 'firebase-admin';
 import { DecodedIdToken, getAuth } from 'firebase-admin/auth';
@@ -125,17 +125,20 @@ export const loginWithFirebase = async (req: Request, res: Response): Promise<vo
   try {
     decodedUser = await getAuth().verifyIdToken(idToken, /* checkRevoked= */ true);
   } catch (error) {
-    res.status(Status.BadRequest).json({ message: 'Token de Firebase no válido o revocado' });
+    let errorMessage = "";
+
+    ((error as any).code === 'auth/id-token-revoked') ?
+      errorMessage = 'Token de Firebase no revocado' :
+      errorMessage = 'Token de Firebase no válido';
+
+    res.status(Status.BadRequest).json({ message: errorMessage });
     return;
   }
 
   if (!decodedUser) {
+    res.status(Status.BadRequest).json({ message: 'No se pudo decodificar el token de Firebase' });
     return;
   }
-
-  console.log("Token recibido de Firebase:", idToken);
-  console.log("Decoded user from Firebase:");
-  console.log(decodedUser);
 
   // Extract user information from decoded token
   const firebaseUid = decodedUser.uid;
@@ -147,7 +150,7 @@ export const loginWithFirebase = async (req: Request, res: Response): Promise<vo
 
   // With the decoded user info, find, link or create the user in our system
   try {
-    const res = findOrLinkOrCreateUserFromFirebase({
+    const userData = await findOrLinkOrCreateUserFromFirebase({
       firebaseUid,
       email,
       emailVerified,
@@ -155,6 +158,12 @@ export const loginWithFirebase = async (req: Request, res: Response): Promise<vo
       displayName,
       photoUrl
     });
+
+    if(!userData) {
+      throw new Error('Error al procesar el usuario de Firebase');
+    }
+
+    res.status(Status.Correct).json({ userData });
   } catch (error) {
     res.status(Status.BadRequest).json({ message: (error as Error).message || 'Error al procesar el usuario de Firebase' });
     return;

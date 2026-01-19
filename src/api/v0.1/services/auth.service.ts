@@ -4,6 +4,7 @@ import { generarJWT } from '../utils/jwt.js';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { FirebaseLoginType } from '../models/interfaces/firebaseLoginType.type.js';
+import { link } from 'fs';
 
 interface JwtPayload {
   uid: string;
@@ -58,6 +59,10 @@ export const loginService = async (email: string, password: string): Promise<{ u
     throw new Error('Email o contraseña incorrectos');
   }
 
+  if(!user.password) {
+    throw new Error('Usuario no tiene contraseña establecida');
+  }
+
   const isValidPassword = await bcrypt.compare(password, user.password);
   if (!isValidPassword) {
     throw new Error('Email o contraseña incorrectos');
@@ -72,23 +77,6 @@ export const loginService = async (email: string, password: string): Promise<{ u
     email: user.email,
     token
   };
-};
-
-export const findOrCreateUserByFirebaseToken = async (decodedToken: any) => {
-  const firebase_uid = decodedToken?.uid;
-  const email = decodedToken?.email;
-  const name = decodedToken?.name || '';
-  const surname = decodedToken?.surname || '';
-  const photo = decodedToken?.picture || '';
-  const provider = decodedToken?.firebase?.sign_in_provider || 'google';
-
-  // Check if token has email and firebase_uid
-  if (!firebase_uid || !email) {
-    throw new Error('Token de Firebase inválido');
-  }
-
-  // Check if user exists by firebase_uid
-  let user = await User.findOne({ firebase_uid: firebase_uid });
 };
 
 /**
@@ -107,4 +95,104 @@ export const findOrCreateUserByFirebaseToken = async (decodedToken: any) => {
  */
 export const findOrLinkOrCreateUserFromFirebase = async (decodedToken: FirebaseLoginType) => {
   const { firebaseUid, email, emailVerified, provider, displayName, photoUrl } = decodedToken;
+
+  console.log("findOrLinkOrCreateUserFromFirebase called with:", decodedToken);
+  if(!email || !emailVerified) {
+    throw new Error('Email no verificado o no proporcionado');
+  }
+
+  if(!firebaseUid) {
+    throw new Error('Firebase UID no proporcionado');
+  }
+
+  // 1) Check if user exists by firebaseUid
+  let user = await User.findOne({ firebase_uid: firebaseUid });
+
+  if(user) {
+    // User found, update last login and basic profile info, if available.
+    const updateUser = await User.findOneAndUpdate(
+      // Find by firebaseUid
+      { firebase_uid: firebaseUid },
+      // Update last login and basic profile info, if available.
+      {
+        $set: {
+          last_login_at: new Date(),
+          ...(displayName ? { name: displayName } : {}),
+          ...(photoUrl ? { photo: photoUrl } : {}),
+        },
+      },
+      // With new set to true, returns the modified document, and applies schema validators
+      { new: true, runValidators: true, context: 'query' }
+    );
+    
+    if(!updateUser) {
+      throw new Error('Error al actualizar el usuario desde Firebase');
+    }
+
+    const token = await generarJWT({ uid: updateUser._id.toString(), role: updateUser.role || "" });
+
+    return {
+      name: updateUser.name,
+      surname: updateUser.surname,
+      email: updateUser.email,
+      token
+    };
+  }
+
+  // 2) User not found by firebaseUID, check if user exists alredy by email
+  user = await User.findOne({ email });
+  
+  if(user) {
+    // User found by email, link accounts by setting firebaseUid and provider
+    const linkedUser = await User.findOneAndUpdate(
+      { email }, // Cambiar por id
+      {
+        $set: {
+          firebase_uid: firebaseUid,
+          provider: provider,
+          email_verified: true,
+          ...(displayName ? { name: displayName } : {}),
+          ...(photoUrl ? { photo: photoUrl } : {}),
+          last_login_at: new Date(),
+        }
+      },
+      { new: true, runValidators: true, context: 'query' }
+    );
+
+    if(!linkedUser) {
+      throw new Error('Error al vincular el usuario desde Firebase');
+    }
+      
+    const token = await generarJWT({ uid: linkedUser._id.toString(), role: linkedUser.role || "" });
+
+    return {
+      name: linkedUser.name,
+      surname: linkedUser.surname,
+      email: linkedUser.email,
+      token
+    };
+  }
+
+  // 3) User not found by either firebaseUid or email, create new user
+  const newUser = await User.create({
+    email,
+    firebase_uid: firebaseUid,
+    provider,
+    email_verified: true,
+    name: displayName || 'Sin nombre',
+    photo: photoUrl || undefined,
+  });
+
+  if(!newUser) {
+    throw new Error('Error al crear el usuario desde Firebase');
+  }
+
+  const token = await generarJWT({ uid: newUser._id.toString(), role: newUser.role || "" });
+
+  return {
+    name: newUser.name,
+    surname: newUser.surname,
+    email: newUser.email,
+    token
+  };
 };

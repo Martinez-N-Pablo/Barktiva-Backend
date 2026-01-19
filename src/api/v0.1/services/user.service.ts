@@ -21,6 +21,10 @@ interface GetUsersOptions {
 export const registerUser = async (input: RegisterInput) => {
     const { password, confirmPassword, email, ...rest } = input;
 
+    if(!password || !confirmPassword) {
+        throw new Error('La contraseña y la confirmación de la contraseña son obligatorias.');
+    }
+    
     if (!validatePassword(password, confirmPassword)) {
         throw new Error('Las contraseñas no coinciden.');
     }

@@ -19,9 +19,13 @@ const UserSchema: Schema = new mongoose.Schema({
     unique: true
   },
 
+  email_verified: {
+    type: Boolean,
+    default: false
+  },
+
   password: {
     type: String,
-    required: true
   },
 
   photo: {
@@ -45,6 +49,7 @@ const UserSchema: Schema = new mongoose.Schema({
       ref: 'Task'
     }
   ],
+
   role: {
     type: String,
     enum: Roles,
@@ -57,19 +62,19 @@ const UserSchema: Schema = new mongoose.Schema({
     sparse: true
   },
 
-  proveider: {
-    type: String,
-    enum: ['local', 'google'],
-    default: 'local'
-  },
-
-  lastLoginAt: {
+  last_login_at: {
     type: Date,
   },
   
   disabled: {
     type: Boolean,
     default: false
+  },
+
+  provider: {
+    type: String,
+    enum: ['local', 'google.com'],
+    default: 'local'
   }
 });
 
