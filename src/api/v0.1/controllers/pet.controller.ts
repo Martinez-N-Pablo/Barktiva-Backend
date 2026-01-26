@@ -74,10 +74,6 @@ export const updatePet = async (req: AuthenticatedRequest, res: Response): Promi
   const { ...petBodyUpdate } = req.body;
   const owner: string = req.uid || "";
 
-  console.log(req.body);
-
-  console.log(SterilizedValue);
-
   if (!owner) {
     res.status(Status.BadRequest).json({ message: 'Falta el UID del usuario.' });
     return;

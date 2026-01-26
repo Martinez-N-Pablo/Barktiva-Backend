@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { FirebaseLoginType } from '../models/interfaces/firebaseLoginType.type.js';
 import { link } from 'fs';
+import { UserRepository } from '../repository/auth.repository.js';
 
 interface JwtPayload {
   uid: string;
@@ -96,7 +97,6 @@ export const loginService = async (email: string, password: string): Promise<{ u
 export const findOrLinkOrCreateUserFromFirebase = async (decodedToken: FirebaseLoginType) => {
   const { firebaseUid, email, emailVerified, provider, displayName, photoUrl } = decodedToken;
 
-  console.log("findOrLinkOrCreateUserFromFirebase called with:", decodedToken);
   if(!email || !emailVerified) {
     throw new Error('Email no verificado o no proporcionado');
   }
@@ -106,23 +106,13 @@ export const findOrLinkOrCreateUserFromFirebase = async (decodedToken: FirebaseL
   }
 
   // 1) Check if user exists by firebaseUid
-  let user = await User.findOne({ firebase_uid: firebaseUid });
-
+  let user = await UserRepository.findUserByFirebaseUid(firebaseUid);
+  
   if(user) {
     // User found, update last login and basic profile info, if available.
-    const updateUser = await User.findOneAndUpdate(
-      // Find by firebaseUid
-      { firebase_uid: firebaseUid },
-      // Update last login and basic profile info, if available.
-      {
-        $set: {
-          last_login_at: new Date(),
-          ...(displayName ? { name: displayName } : {}),
-          ...(photoUrl ? { photo: photoUrl } : {}),
-        },
-      },
-      // With new set to true, returns the modified document, and applies schema validators
-      { new: true, runValidators: true, context: 'query' }
+    const updateUser = await UserRepository.updateLoginAndProfileByFirebaseUid(
+      firebaseUid, 
+      { displayName: displayName || "", photoUrl: photoUrl || "" }
     );
     
     if(!updateUser) {
@@ -140,23 +130,13 @@ export const findOrLinkOrCreateUserFromFirebase = async (decodedToken: FirebaseL
   }
 
   // 2) User not found by firebaseUID, check if user exists alredy by email
-  user = await User.findOne({ email });
+  user = await UserRepository.findUserByEmail(email);
   
   if(user) {
     // User found by email, link accounts by setting firebaseUid and provider
-    const linkedUser = await User.findOneAndUpdate(
-      { email }, // Cambiar por id
-      {
-        $set: {
-          firebase_uid: firebaseUid,
-          provider: provider,
-          email_verified: true,
-          ...(displayName ? { name: displayName } : {}),
-          ...(photoUrl ? { photo: photoUrl } : {}),
-          last_login_at: new Date(),
-        }
-      },
-      { new: true, runValidators: true, context: 'query' }
+    const linkedUser = await UserRepository.linkFirebaseToExistingUserWithEmail(
+      email, 
+      { firebaseUid, provider, displayName: displayName || "", photoUrl: photoUrl || "" }
     );
 
     if(!linkedUser) {
@@ -172,15 +152,14 @@ export const findOrLinkOrCreateUserFromFirebase = async (decodedToken: FirebaseL
       token
     };
   }
-
+  
   // 3) User not found by either firebaseUid or email, create new user
-  const newUser = await User.create({
+  const newUser = await UserRepository.createUserWithFirebaseData({
     email,
-    firebase_uid: firebaseUid,
+    firebaseUid,
     provider,
-    email_verified: true,
-    name: displayName || 'Sin nombre',
-    photo: photoUrl || undefined,
+    displayName: displayName || "",
+    photoUrl: photoUrl || ""
   });
 
   if(!newUser) {

@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { PetInterface } from './interfaces/pet.interface.js';
 import { SterilizedValue } from './interfaces/sterelized.js';
 
-const PetSchema = new mongoose.Schema({
+const PetSchema = new mongoose.Schema<PetInterface & Document>({
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

@@ -8,9 +8,9 @@ export interface TaskInterface {
   name: string;
   photo?: string;
   dosesTime?: string; // day week month
-  dosesPerDay?: number;
-  dosesPerWeek?: number;
-  dosesPerMonth?: number;
+  dosePerDay?: number;
+  dosePerWeek?: number;
+  dosePerMonth?: number;
   notification?: boolean;
   quantity?: number;
   routeAdministration?: string;

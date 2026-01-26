@@ -3,7 +3,7 @@ import { Schema } from 'mongoose';
 import { Roles } from '../utils/const/roles.js';
 import { UserInterface } from './interfaces/user.interface.js';
 
-const UserSchema: Schema = new mongoose.Schema({
+const UserSchema: Schema = new mongoose.Schema<UserInterface & Document>({
   name: {
     type: String,
     required: true
@@ -73,7 +73,7 @@ const UserSchema: Schema = new mongoose.Schema({
 
   provider: {
     type: String,
-    enum: ['local', 'google.com'],
+    enum: ['local', 'password', 'google.com'],
     default: 'local'
   }
 });
