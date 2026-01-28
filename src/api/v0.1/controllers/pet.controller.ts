@@ -1,14 +1,12 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Status } from '../utils/const/status.js';
 import * as PetService from '../services/pet.service.js';
 import * as UserService from '../services/user.service.js';
 import { SortOrder } from '../utils/const/sortOrder.js';
 import { AuthenticatedRequest } from '../models/interfaces/authenticatedRequest.js';
-import mongoose, { ClientSession } from 'mongoose';
+import mongoose, { ClientSession, Types } from 'mongoose';
 import { deleteImageFromStorage, uploadImageToStorage } from '../services/firebase.service.js';
 import * as TaskService from '../services/task.service.js';
-import { Types } from 'mongoose';
-import { SterilizedValue } from '../models/interfaces/sterelized.js';
 
 export const createPet = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const owner: string = req.uid || "";
@@ -25,13 +23,17 @@ export const createPet = async (req: AuthenticatedRequest, res: Response): Promi
     throw new Error("El ID de la raza no es válido");
   }
 
-  req.body.owner = owner;
+  if (Types.ObjectId.isValid(owner)) {
+    req.body.owner = new Types.ObjectId(owner);
+  } else {
+    throw new Error("El ID del usuario no es válido");
+  }
 
   const session: ClientSession = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const [pet] = await PetService.createPetService(req.body, session);
+    const [ pet ] = await PetService.createPetService(req.body, session);
 
     if(!pet) {
       await session.abortTransaction();
@@ -133,6 +135,9 @@ export const getPetById = async (req: AuthenticatedRequest, res: Response): Prom
       res.status(Status.NotFound).json({ message: 'Mascota no encontrada' });
       return;
     }
+
+    console.log('Pet found:');
+    console.log(pet);
     
     res.status(Status.Correct).json(pet);
   } catch (error) {

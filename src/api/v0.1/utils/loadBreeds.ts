@@ -1,6 +1,7 @@
 import Breed from "../models/breed.model.js";
 import axios from "axios";
 import { BreedsDogApi } from "../models/interfaces/breedsDogApi.js";
+import { Types } from "mongoose";
 
 export async function loadBreeds() {
   const initialBreeds = [
@@ -93,6 +94,10 @@ export async function loadBreedsFromAPI() {
         { upsert: true }
       );
     }
+
+    const exists = await Breed.exists({ _id: new Types.ObjectId("69789ca9b2b75429d02876b4") });
+
+    console.log('Existe raza con id 69789ca9b2b75429d02876b4:', exists ? 'Sí' : 'No');
 
     const validNames = formattedBreeds.map(b => b.name);
     await Breed.deleteMany({ name: { $nin: validNames } });
