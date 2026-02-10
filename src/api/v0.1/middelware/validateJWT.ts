@@ -9,10 +9,7 @@ export const validarJWT = (
   next: NextFunction
 ): void => {
     const authHeader = req.header('authorization');
-
-    console.log("middleware");
-    console.log(req.body);
-
+    
     if (!authHeader ) {
         res.status(400).json({
             message: 'Falta información en el header'

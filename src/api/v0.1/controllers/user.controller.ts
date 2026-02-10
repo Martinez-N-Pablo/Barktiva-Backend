@@ -14,6 +14,7 @@ import { bucket } from '../../../config/config-firebase.js';
 import { deleteImageFromStorage, uploadImageToStorage } from '../services/firebase.service.js';
 import { AuthenticatedRequest } from '../models/interfaces/authenticatedRequest.js';
 import mongoose from 'mongoose';
+import { getAuth } from 'firebase-admin/auth';
 
 export const createUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { name, surname, email, password, confirmPassword, photo, birthdate } = req.body;
@@ -125,10 +126,26 @@ export const deleteUser = async (req: AuthenticatedRequest, res: Response): Prom
   }
 
   const session = await mongoose.startSession();
+  // Start transaction with mongoose session
   session.startTransaction();
-
+  
   try {
-    const user = await UserService.deleteUser(uid);
+    // First, get user data requiered, like firebase_uid to delete the user from Firebasse
+    const findUser = await User.findById(uid).select("_id firebase_uid photo pets tasks").exec();
+
+    if(!findUser) {
+      console.log("User to delete not found:", uid);
+      await session.abortTransaction();
+      res.status(Status.NotFound).json({ message: 'Usuario no encontrado' });;
+      return;
+    }
+
+    // Delete user from Firebase Authentication if firebase_uid exists
+    if(findUser.firebase_uid) {
+      await getAuth().deleteUser(findUser.firebase_uid || "");
+    }
+
+    const user = await UserService.deleteUser(uid, session);
 
     if(!user) {
       await session.abortTransaction();

@@ -18,7 +18,7 @@ interface GetTaskTypesInterface {
 }
 
 export const createTaskService = async (taskData: any, session: ClientSession): Promise<any> => {
-    return await Task.create([taskData], {session});
+    return await Task.create([taskData], { session });
 };
 
 export const getTaskByIdService = async (ownerId: string): Promise<any> => {
@@ -33,6 +33,8 @@ export const getTaskByIdService = async (ownerId: string): Promise<any> => {
 
 export const deleteTaskService = async (taskId: string, owner: string, session: ClientSession) => {
     const task = await Task.findById(taskId);
+
+    console.log("Deleting task:", taskId, "for owner:", owner);
     if (!task) {
         throw new Error('Tarea no encontrada.');
     }

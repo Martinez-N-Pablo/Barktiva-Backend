@@ -10,6 +10,6 @@ export interface PetInterface {
     sex?: 'male' | 'female' | "";
     age?: number;
     weight?: number;
-    sterelized?: SterilizedType;
+    sterilized?: SterilizedType;
     tasks?: Types.ObjectId[];
 };

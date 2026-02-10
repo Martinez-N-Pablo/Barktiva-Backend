@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
-import { renovarTokenService, validarTokenService, loginService } from '../services/auth.service.js';
+import { renovarTokenService, validarTokenService, loginService, findOrLinkOrCreateUserFromFirebase } from '../services/auth.service.js';
 import { Status } from '../utils/const/status.js';
+// import * as admin from 'firebase-admin';
+import { DecodedIdToken, getAuth } from 'firebase-admin/auth';
 
 export const renovarToken = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -92,5 +94,78 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.status(Status.BadRequest).json({
       message: (error as Error).message || 'Error en login',
     });
+  }
+};
+
+export const loginWithFirebase = async (req: Request, res: Response): Promise<void> => {
+  const authHeader = req.header('authorization');
+
+  if(!authHeader) {
+    res.status(Status.BadRequest).json({ message: 'Faltan datos en la cabecera' });
+    return;
+  }
+
+  // Split token from "Bearer ..."
+  const authenticationParts = authHeader.split(' ');
+
+  const idToken = authenticationParts.length == 2 ? authenticationParts[1] : null;
+
+  if (!idToken) {
+    res.status(Status.BadRequest).json({ message: 'Formato del token invalido' });
+    return;
+  }
+
+  /**
+   * Verify the ID token (JWT) from Firebase, for this purpose,
+   * we use the token verification method from Firebase Admin SDK with the token received from the client,
+   * and with the second parameter, checkRevoked, set to true to ensure the token has not been revoked.
+   */
+  let decodedUser: DecodedIdToken;
+
+  try {
+    decodedUser = await getAuth().verifyIdToken(idToken, /* checkRevoked= */ true);
+  } catch (error) {
+    let errorMessage = "";
+
+    ((error as any).code === 'auth/id-token-revoked') ?
+      errorMessage = 'Token de Firebase no revocado' :
+      errorMessage = 'Token de Firebase no válido';
+
+    res.status(Status.BadRequest).json({ message: errorMessage });
+    return;
+  }
+
+  if (!decodedUser) {
+    res.status(Status.BadRequest).json({ message: 'No se pudo decodificar el token de Firebase' });
+    return;
+  }
+
+  // Extract user information from decoded token
+  const firebaseUid = decodedUser.uid;
+  const email = decodedUser.email ?? null;
+  const emailVerified = decodedUser.email_verified ?? false;
+  const provider = decodedUser.firebase?.sign_in_provider ?? "unknown";
+  const displayName = typeof decodedUser.name === "string" ? decodedUser.name : null;
+  const photoUrl = typeof decodedUser.picture === "string" ? decodedUser.picture : null;
+
+  // With the decoded user info, find, link or create the user in our system
+  try {
+    const userData = await findOrLinkOrCreateUserFromFirebase({
+      firebaseUid,
+      email,
+      emailVerified,
+      provider,
+      displayName,
+      photoUrl
+    });
+
+    if(!userData) {
+      throw new Error('Error al procesar el usuario de Firebase');
+    }
+
+    res.status(Status.Correct).json({ userData });
+  } catch (error) {
+    res.status(Status.BadRequest).json({ message: (error as Error).message || 'Error al procesar el usuario de Firebase' });
+    return;
   }
 };

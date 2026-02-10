@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
+import { TaskInterface } from './interfaces/task.interface.js';
 
-const TaskSchema = new mongoose.Schema({
+const TaskSchema = new mongoose.Schema<TaskInterface & Document>({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -79,5 +80,5 @@ const TaskSchema = new mongoose.Schema({
   }
 });
 
-const Task = mongoose.model('Task', TaskSchema);
+const Task = mongoose.model<TaskInterface & Document>('Task', TaskSchema);
 export default Task;

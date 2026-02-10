@@ -21,6 +21,10 @@ interface GetUsersOptions {
 export const registerUser = async (input: RegisterInput) => {
     const { password, confirmPassword, email, ...rest } = input;
 
+    if(!password || !confirmPassword) {
+        throw new Error('La contraseña y la confirmación de la contraseña son obligatorias.');
+    }
+    
     if (!validatePassword(password, confirmPassword)) {
         throw new Error('Las contraseñas no coinciden.');
     }
@@ -102,12 +106,12 @@ export const getUserById = async (id: string) => {
     return user;
 };
 
-export const deleteUser = async (id: string) => {
-    const user = await User.findByIdAndDelete(id);
+export const deleteUser = async (id: string, session: ClientSession) => {
+    const user = await User.findByIdAndDelete(id, { session });
     if (!user) throw new Error('Usuario no encontrado o ya eliminado.');
 
     if(user.photo) {
-      await deleteImageFromStorage(user.photo);  
+      await deleteImageFromStorage(user.photo);
     }
 
     return user;
@@ -164,7 +168,12 @@ export const removePetFromUser = async (userId: string, petId: Types.ObjectId) =
         throw new Error('El usuario no tiene mascotas.');
     }
 
+    console.log('Before removal:', user.pets);
+    console.log('Removing petId:', petId);
+
     user.pets = user.pets.filter((pet: Types.ObjectId) => pet.toString() !== petId.toString());
+
+    console.log('After removal:', user.pets);
     await user.save();
     
     return user;
